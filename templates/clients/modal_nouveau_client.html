@@ -1,0 +1,291 @@
+<!-- Modal pour créer un nouveau client -->
+<div class="modal fade" id="modalNouveauClient" tabindex="-1" aria-labelledby="modalNouveauClientLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNouveauClientLabel">
+                    <i class="fas fa-plus-circle"></i> Nouveau Client
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formNouveauClient" method="POST" action="{{ url_for('clients.nouveau_client') }}">
+                <div class="modal-body">
+                    <!-- Champs obligatoires en premier -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.
+                    </div>
+
+                    <!-- Identification -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-id-card"></i> Identification</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Code Client *</label>
+                                    <input type="text" name="client" class="form-control bg-warning bg-opacity-25" 
+                                           required maxlength="20" placeholder="Ex: CLI001">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Nom *</label>
+                                    <input type="text" name="nom" class="form-control" 
+                                           required maxlength="50" placeholder="Nom de famille">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Prénom</label>
+                                    <input type="text" name="prenom" class="form-control" 
+                                           maxlength="30" placeholder="Prénom">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Entreprise</label>
+                                    <input type="text" name="compagny" class="form-control" 
+                                           maxlength="50" placeholder="Nom de l'entreprise">
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Type</label>
+                                    <select name="type" class="form-select">
+                                        <option value="">Sélectionner...</option>
+                                        <option value="PARTICULIER">Particulier</option>
+                                        <option value="ENTREPRISE">Entreprise</option>
+                                        <option value="GOUVERNEMENT">Gouvernement</option>
+                                        <option value="ORGANISME">Organisme</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Langue</label>
+                                    <select name="langue" class="form-select">
+                                        <option value="FR" selected>Français</option>
+                                        <option value="EN">Anglais</option>
+                                        <option value="ES">Espagnol</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch mt-4">
+                                        <input class="form-check-input" type="checkbox" name="actif" id="modalActif" checked>
+                                        <label class="form-check-label" for="modalActif">Client actif</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coordonnées -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-map-marker-alt"></i> Coordonnées</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Adresse</label>
+                                    <input type="text" name="adr1" class="form-control" maxlength="100">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Ville</label>
+                                    <input type="text" name="ville" class="form-control" maxlength="50">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-3">
+                                    <label class="form-label">Code postal</label>
+                                    <input type="text" name="cp1" class="form-control" maxlength="10">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Province</label>
+                                    <select name="prov" class="form-select">
+                                        <option value="">Sélectionner...</option>
+                                        <option value="QC">Québec</option>
+                                        <option value="ON">Ontario</option>
+                                        <option value="BC">Colombie-Britannique</option>
+                                        <option value="AB">Alberta</option>
+                                        <option value="MB">Manitoba</option>
+                                        <option value="SK">Saskatchewan</option>
+                                        <option value="NS">Nouvelle-Écosse</option>
+                                        <option value="NB">Nouveau-Brunswick</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Téléphone</label>
+                                    <input type="tel" name="tphone" class="form-control" maxlength="20">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="email" class="form-control" maxlength="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Commercial -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-handshake"></i> Données Commerciales</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Vendeur</label>
+                                    <input type="text" name="vendeur" class="form-control" maxlength="30">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Termes</label>
+                                    <select name="termes" class="form-select">
+                                        <option value="">Sélectionner...</option>
+                                        <option value="NET 30">Net 30 jours</option>
+                                        <option value="NET 15">Net 15 jours</option>
+                                        <option value="COD">COD</option>
+                                        <option value="PREPAYE">Prépayé</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Limite crédit</label>
+                                    <input type="number" step="0.01" name="limcre" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remarques -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-comment"></i> Remarques</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Mot-clé 1</label>
+                                    <input type="text" name="motcle1" class="form-control" maxlength="50">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Mot-clé 2</label>
+                                    <input type="text" name="motcle2" class="form-control" maxlength="50">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-12">
+                                    <label class="form-label">Commentaire</label>
+                                    <textarea name="comment" class="form-control" rows="2" 
+                                              placeholder="Informations importantes sur le client..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Créer le client
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Auto-uppercase pour le code client dans le modal
+    const modalClientInput = document.querySelector('#modalNouveauClient input[name="client"]');
+    if (modalClientInput) {
+        modalClientInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    
+    // Gestion de la soumission du formulaire modal
+    const modalForm = document.getElementById('formNouveauClient');
+    if (modalForm) {
+        modalForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Afficher un indicateur de chargement
+            const submitBtn = modalForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+            submitBtn.disabled = true;
+            
+            // Soumettre le formulaire via AJAX
+            const formData = new FormData(modalForm);
+            
+            fetch(modalForm.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // Si ce n'est pas du JSON, c'est probablement une redirection
+                    throw new Error('Not JSON response');
+                }
+            })
+            .then(data => {
+                if (data && data.success) {
+                    // Fermer le modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalNouveauClient'));
+                    modal.hide();
+                    
+                    // Afficher un message de succès
+                    showAlert('success', data.message || 'Client créé avec succès!');
+                    
+                    // Recharger la liste si on est sur la page des clients
+                    if (window.location.pathname.includes('/clients')) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }
+                } else {
+                    showAlert('danger', data.message || 'Erreur lors de la création du client.');
+                }
+            })
+            .catch(() => {
+                // Si ce n'est pas du JSON, soumettre normalement
+                modalForm.submit();
+            })
+            .finally(() => {
+                // Restaurer le bouton
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+});
+
+// Fonction pour afficher des alertes
+function showAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insérer l'alerte en haut de la page
+    const container = document.querySelector('.container-fluid') || document.body;
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Supprimer l'alerte après 5 secondes
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Réinitialiser le formulaire quand le modal est fermé
+document.getElementById('modalNouveauClient').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('formNouveauClient').reset();
+});
+</script>

@@ -1,0 +1,634 @@
+{% extends "base.html" %}
+
+{% block title %}{{ produit.produit_id }} - Détail{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-eye"></i> Produit - {{ produit.produit_id }}</h1>
+    <div>
+        <a href="{{ url_for('liste_produits') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+        <a href="{{ url_for('modifier_produit', id=produit.id) }}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Modifier
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Image et informations principales -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                {% if produit.image_path %}
+                <img src="{{ url_for('static', filename='uploads/' + produit.image_path) }}"
+                    class="img-fluid rounded mb-3" style="max-height: 300px;" alt="Image du produit">
+                {% else %}
+                <div class="bg-light rounded p-5 mb-3">
+                    <i class="fas fa-image fa-3x text-muted"></i>
+                    <p class="mt-2 text-muted">Aucune image</p>
+                </div>
+                {% endif %}
+                <h4>{{ produit.produit_id }}</h4>
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    <span class="badge bg-{{ 'success' if produit.actif == 'O' else 'secondary' }} fs-6">
+                        {{ 'Actif' if produit.actif == 'O' else 'Inactif' }}
+                    </span>
+                    {% if produit.discontinue == 'O' %}
+                    <span class="badge bg-warning fs-6">Discontinué</span>
+                    {% endif %}
+                    {% if produit.inventorie == 'O' %}
+                    <span class="badge bg-info fs-6">Inventorié</span>
+                    {% endif %}
+                </div>
+                {% if produit.prix_revient %}
+                <h5 class="text-primary">{{ "%.2f"|format(produit.prix_revient) }} $</h5>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Informations système -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-info"></i> Informations Système</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 mb-2">
+                        <strong>Créé le:</strong><br>
+                        <small class="text-muted">
+                            {{ produit.date_creation.strftime('%d/%m/%Y à %H:%M') if produit.date_creation else 'N/A' }}
+                        </small>
+                    </div>
+                    <div class="col-12">
+                        <strong>Modifié le:</strong><br>
+                        <small class="text-muted">
+                            {{ produit.date_modification.strftime('%d/%m/%Y à %H:%M') if produit.date_modification else
+                            'N/A' }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Détails du produit -->
+    <div class="col-lg-8">
+        <!-- Description -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-align-left"></i> Description du Produit</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Description (Français):</strong>
+                            <p>{{ produit.description_fr or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Description (Anglais):</strong>
+                            <p>{{ produit.description_en or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Code-barres:</strong>
+                            <p><code>{{ produit.barcode or '-' }}</code></p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Remarque 1:</strong>
+                            <p>{{ produit.remarques1 or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Remarque 2:</strong>
+                            <p>{{ produit.remarques2 or '-' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Groupe:</strong>
+                            <p>{{ produit.groupe or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Format:</strong>
+                            <p>{{ produit.famille or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Substitut:</strong>
+                            <p>{{ produit.substitut or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Type:</strong>
+                            <p>{{ produit.type_produit or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Catégorie:</strong>
+                            <p>{{ produit.categorie or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Mots-clés:</strong>
+                            <p>
+                                {% if produit.motclef1 %}{{ produit.motclef1 }}{% endif %}
+                                {% if produit.motclef2 %}{% if produit.motclef1 %}, {% endif %}{{ produit.motclef2 }}{%
+                                endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations détaillées -->
+        <div class="row">
+            <!-- Gestion -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-cogs"></i> Gestion</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Inventorié:</strong><br>
+                                <span class="badge bg-{{ 'success' if produit.inventorie == 'O' else 'secondary' }}">
+                                    {{ 'Oui' if produit.inventorie == 'O' else 'Non' }}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <strong>Escomptable:</strong><br>
+                                <span class="badge bg-{{ 'success' if produit.escomptable == 'O' else 'secondary' }}">
+                                    {{ 'Oui' if produit.escomptable == 'O' else 'Non' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-6">
+                                <strong>Étiquettes:</strong><br>
+                                <span class="badge bg-{{ 'success' if produit.etiquettes == 'O' else 'secondary' }}">
+                                    {{ 'Oui' if produit.etiquettes == 'O' else 'Non' }}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <strong>MAJ Auto:</strong><br>
+                                <span class="badge bg-{{ 'success' if produit.maj_auto == 'O' else 'secondary' }}">
+                                    {{ 'Oui' if produit.maj_auto == 'O' else 'Non' }}
+                                </span>
+                            </div>
+                        </div>
+                        {% if produit.gestion_serie == 'O' or produit.gestion_lot == 'O' %}
+                        <div class="row mt-3">
+                            {% if produit.gestion_serie == 'O' %}
+                            <div class="col-6">
+                                <strong>Gestion série:</strong><br>
+                                <span class="badge bg-info">Activée</span>
+                            </div>
+                            {% endif %}
+                            {% if produit.gestion_lot == 'O' %}
+                            <div class="col-6">
+                                <strong>Gestion lot:</strong><br>
+                                <span class="badge bg-info">Activée</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Taxes et comptabilité -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-percentage"></i> Taxes & Comptabilité</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>T.V.P:</strong><br>
+                                <span class="badge bg-{{ 'success' if produit.tvp == 'O' else 'secondary' }}">
+                                    {{ 'Oui' if produit.tvp == 'O' else 'Non' }}
+                                </span>
+                            </div>
+                            <div class="col-6">
+                                <strong>T.V.F:</strong><br>
+                                <span class="badge bg-{{ 'success' if produit.tvf == 'O' else 'secondary' }}">
+                                    {{ 'Oui' if produit.tvf == 'O' else 'Non' }}
+                                    {% if produit.taux_taxe_fed %}({{ produit.taux_taxe_fed }}%){% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        {% if produit.poste_vente_can or produit.poste_vente_us or produit.poste_achat_can or
+                        produit.poste_achat_us %}
+                        <div class="mb-2">
+                            <strong>Postes comptables:</strong>
+                        </div>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Vente:</strong></td>
+                                <td>CAN: {{ produit.poste_vente_can or '-' }}</td>
+                                <td>US: {{ produit.poste_vente_us or '-' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Achat:</strong></td>
+                                <td>CAN: {{ produit.poste_achat_can or '-' }}</td>
+                                <td>US: {{ produit.poste_achat_us or '-' }}</td>
+                            </tr>
+                        </table>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coûts et stocks -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-dollar-sign"></i> Coûts et Prix</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if produit.cout_reference or produit.cout_tvf or produit.prix_revient %}
+                        <table class="table table-sm">
+                            {% if produit.cout_reference %}
+                            <tr>
+                                <td><strong>Coût référence:</strong></td>
+                                <td class="text-end">{{ "%.4f"|format(produit.cout_reference) }} $</td>
+                            </tr>
+                            {% endif %}
+                            {% if produit.cout_tvf %}
+                            <tr>
+                                <td><strong>Coût T.V.F:</strong></td>
+                                <td class="text-end">{{ "%.4f"|format(produit.cout_tvf) }} $</td>
+                            </tr>
+                            {% endif %}
+                            {% if produit.prix_revient %}
+                            <tr class="table-primary">
+                                <td><strong>Prix de revient:</strong></td>
+                                <td class="text-end"><strong>{{ "%.4f"|format(produit.prix_revient) }} $</strong></td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                        {% else %}
+                        <p class="text-muted">Aucune information de coût</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-boxes"></i> Gestion des Stocks</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if produit.point_commande or produit.minimum_commander or produit.maximum_inventaire %}
+                        <table class="table table-sm">
+                            {% if produit.point_commande %}
+                            <tr>
+                                <td><strong>Point de commande:</strong></td>
+                                <td class="text-end">{{ "%.2f"|format(produit.point_commande) }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if produit.minimum_commander %}
+                            <tr>
+                                <td><strong>Minimum à commander:</strong></td>
+                                <td class="text-end">{{ "%.2f"|format(produit.minimum_commander) }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if produit.maximum_inventaire %}
+                            <tr>
+                                <td><strong>Maximum inventaire:</strong></td>
+                                <td class="text-end">{{ "%.2f"|format(produit.maximum_inventaire) }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                        {% else %}
+                        <p class="text-muted">Aucune information de stock</p>
+                        {% endif %}
+
+                        {% if produit.mode_calcul or produit.formule %}
+                        <div class="mt-3">
+                            {% if produit.mode_calcul %}
+                            <div><strong>Mode calcul:</strong> {{ produit.mode_calcul }}</div>
+                            {% endif %}
+                            {% if produit.formule %}
+                            <div><strong>Formule:</strong> {{ produit.formule }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Core/Redevance -->
+        {% if produit.produit_core or produit.groupe_core or produit.core_valeur or produit.core_escalade or
+        produit.marge %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-link"></i> Noyau/Redevance</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if produit.produit_core %}
+                    <div class="col-md-4">
+                        <strong>Produit noyau:</strong>
+                        <p>{{ produit.produit_core }}</p>
+                    </div>
+                    {% endif %}
+                    {% if produit.groupe_core %}
+                    <div class="col-md-4">
+                        <strong>Groupe:</strong>
+                        <p>{{ produit.groupe_core }}</p>
+                    </div>
+                    {% endif %}
+                    {% if produit.g_core %}
+                    <div class="col-md-4">
+                        <strong>G:</strong>
+                        <p>{{ produit.g_core }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if produit.core_valeur or produit.core_escalade or produit.marge %}
+                <div class="row">
+                    {% if produit.core_valeur %}
+                    <div class="col-md-4">
+                        <strong>Valeur:</strong>
+                        <p>{{ "%.4f"|format(produit.core_valeur) }}</p>
+                    </div>
+                    {% endif %}
+                    {% if produit.core_escalade %}
+                    <div class="col-md-4">
+                        <strong>Escalade:</strong>
+                        <p>{{ "%.4f"|format(produit.core_escalade) }}</p>
+                    </div>
+                    {% endif %}
+                    {% if produit.marge %}
+                    <div class="col-md-4">
+                        <strong>Marge:</strong>
+                        <p class="text-primary fw-bold">{{ "%.4f"|format(produit.marge) }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Autres informations -->
+        {% if produit.localisation or produit.famille or produit.evaluation %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Autres Informations</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if produit.localisation %}
+                    <div class="col-md-4">
+                        <strong>Localisation:</strong>
+                        <p>{{ produit.localisation }}</p>
+                    </div>
+                    {% endif %}
+                    {% if produit.famille %}
+                    <div class="col-md-4">
+                        <strong>Famille:</strong>
+                        <p>{{ produit.famille }}</p>
+                    </div>
+                    {% endif %}
+                    {% if produit.evaluation %}
+                    <div class="col-md-4">
+                        <strong>Évaluation:</strong>
+                        <p>{{ produit.evaluation }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bloc d'affichage des quantités par entrepôt (INVEN) -->
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-warehouse"></i> Quantités par Entrepôt</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                {% if quantites and quantites|length > 0 %}
+                <div class="row g-3">
+                    {% for q in quantites %}
+                    <div class="card h-100 border-primary shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="fas fa-warehouse"></i> {{ q.entrepot }}</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <div class="card border-info mb-2">
+                                        <div class="card-header bg-info text-white py-1"><strong>Stock</strong>
+                                        </div>
+                                        <div class="card-body py-2">
+                                            <ul class="list-unstyled mb-0">
+                                                <li>En main : <span class="fw-semibold">{{ q.qmain }}</span></li>
+                                                <li>Disponible : <span class="fw-semibold">{{ (q.qmain | float(0)) -
+                                                        (q.qcom | float(0)) - (q.qnf | float(0)) }}</span></li>
+                                                <li>Non facturée : <span class="fw-semibold">{{ q.qnf }}</span></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="card border-warning mb-2">
+                                        <div class="card-header bg-warning text-dark py-1"><strong>Commandes &
+                                                Attentes</strong></div>
+                                        <div class="card-body py-2">
+                                            <ul class="list-unstyled mb-0">
+                                                <li>Commandé : <span class="fw-semibold">{{ q.qcom }}</span></li>
+                                                <li>Attendue : <span class="fw-semibold">{{ q.encom }}</span></li>
+                                                <li>Date attendue : <span class="fw-semibold">{{ q.dta }}</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="card border-secondary mb-2">
+                                        <div class="card-header bg-secondary text-white py-1"><strong>Localisation &
+                                                Début</strong></div>
+                                        <div class="card-body py-2">
+                                            <ul class="list-unstyled mb-0">
+                                                <li>Localisation : <span class="fw-semibold">{{ q.localisation
+                                                        }}</span></li>
+                                                <li>Début : <span class="fw-semibold">{{ q.qdebut }}</span></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="card border-dark mb-2">
+                                        <div class="card-header bg-light text-dark py-1"><strong>Mouvements</strong>
+                                        </div>
+                                        <div class="card-body py-2">
+                                            <ul class="list-unstyled mb-0">
+                                                <li>Reçue : <span class="fw-semibold">{{ q.qrecu }}</span></li>
+                                                <li>Réservée : <span class="fw-semibold">{{ q.qreser }}</span></li>
+                                                <li>Vendue : <span class="fw-semibold">{{ q.qvendu }}</span></li>
+                                                <li>Fabriquée : <span class="fw-semibold">{{ q.qfabri }}</span></li>
+                                                <li>Utilisée : <span class="fw-semibold">{{ q.qutil }}</span></li>
+                                                <li>Transférée : <span class="fw-semibold">{{ q.qtrans }}</span>
+                                                </li>
+                                                <li>Ajustement : <span class="fw-semibold">{{ q.ajust }}</span></li>
+                                                <li>Gratuite : <span class="fw-semibold">{{ q.qgrat }}</span></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Aucune quantité trouvée pour ce produit.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Interfaces supplémentaires : Fiche technique produit -->
+<div class="col-lg-8">
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5><i class="fas fa-file-alt"></i> Fiche technique produit (Interface complémentaire)</h5>
+        </div>
+        <div class="card-body">
+            <p>Cette section permet d'intégrer ou de lier une interface complémentaire pour la gestion des fiches techniques du produit.<br>
+                Exemple d'intégration :
+            <ul>
+                <li>Affichage des descriptions techniques (français/anglais) sur plusieurs lignes</li>
+                <li>Navigation, édition, impression, mémos, aide, etc.</li>
+                <li>Champs techniques : FICHE1 à FICHE10, FICHE1A à FICHE10A</li>
+            </ul>
+            </p>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Description technique (français)</h6>
+                    <pre class="bg-light p-2 border rounded">
+                        {% if inpteck %}
+                        {% for i in range(1, 11) %}
+                            {{ attribute(inpteck, 'fiche' ~ i) or '' }}
+                        {% endfor %}
+                        {% else %}
+                        <span class="text-muted">Aucune fiche technique disponible.</span>
+                        {% endif %}
+                    </pre>
+                </div>
+                <div class="col-md-6">
+                    <h6>Description technique (anglais)</h6>
+                    <pre class="bg-light p-2 border rounded">
+                        {% if inpteck %}
+                        {% for i in range(1, 11) %}
+                            {{ attribute(inpteck, 'fiche' ~ i ~ 'a') or '' }}
+                        {% endfor %}
+                        {% else %}
+                        <span class="text-muted">Aucune fiche technique disponible.</span>
+                        {% endif %}
+                    </pre>
+                </div>
+            </div>
+            <small class="text-muted">Pour une intégration avancée, prévoir une interface dédiée type WinForms ou web (navigation, édition, impression, etc.).</small>
+        </div>
+    </div>
+
+    <!-- Nouvelle section : Interface Web Produit (produitweb) -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5><i class="fas fa-globe"></i> Interface Web Produit</h5>
+        </div>
+        <div class="card-body">
+            {% if produitweb %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border-primary mb-2">
+                        <div class="card-header">Ligne / Couleur / Grandeur</div>
+                        <div class="card-body">
+                            <strong>Ligne:</strong> {{ produitweb.ligprod }}<br>
+                            <strong>Couleur:</strong> {{ produitweb.couleur }}<br>
+                            <strong>Grandeur:</strong> {{ produitweb.grandeur }}
+                        </div>
+                    </div>
+                    <div class="card border-secondary mb-2">
+                        <div class="card-header">Dimensions</div>
+                        <div class="card-body">
+                            <strong>Longueur:</strong> {{ produitweb.longueur }}<br>
+                            <strong>Largeur:</strong> {{ produitweb.largeur }}<br>
+                            <strong>Hauteur:</strong> {{ produitweb.hauteur }}<br>
+                            <strong>Poids:</strong> {{ produitweb.poid }}
+                        </div>
+                    </div>
+                    <div class="card border-info mb-2">
+                        <div class="card-header">Lien photo</div>
+                        <div class="card-body">
+                            <a href="{{ produitweb.lienpho }}" target="_blank">{{ produitweb.lienpho }}</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-success mb-2">
+                        <div class="card-header">Marque / Modèle</div>
+                        <div class="card-body">
+                            <strong>Marque:</strong> {{ produitweb.marque }}<br>
+                            <strong>Modèle:</strong> {{ produitweb.modele }}
+                        </div>
+                    </div>
+                    <div class="card border-warning mb-2">
+                        <div class="card-header">Groupe / Famille / Année</div>
+                        <div class="card-body">
+                            <strong>Groupe:</strong> {{ produitweb.groupe }}<br>
+                            <strong>Famille:</strong> {{ produitweb.famille }}<br>
+                            <strong>Année:</strong> {{ produitweb.annee }}
+                        </div>
+                    </div>
+                    <div class="card border-dark mb-2">
+                        <div class="card-header">Statut Web</div>
+                        <div class="card-body">
+                            <strong>Actif Web:</strong>
+                            <span class="badge bg-{{ 'success' if produitweb.actif == 'O' else 'danger' }}">
+                                {{ 'Actif' if produitweb.actif == 'O' else 'Désactivé' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-muted">Aucune information web trouvée pour ce produit.</p>
+            {% endif %}
+            <small class="text-muted">Synchronisation automatique avec la table <strong>produitweb</strong> (clé PRODUIT = CAT).<br>
+                Champs affichés : ligne, couleur, grandeur, dimensions, marque, modèle, groupe, famille, année, lien photo, statut web.<br>
+                Pour modifier ces informations, utiliser l’interface dédiée ou contacter l’administrateur.</small>
+        </div>
+    </div>
+</div>
+
+<!-- Section Synchronisation des caractéristiques Apogee/MySQL -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h5><i class="fas fa-link"></i> Caractéristiques synchronisées Apogee ↔ MySQL</h5>
+    </div>
+    <div class="card-body">
+        <ul>
+            <li>Catégorie (Apogee/MySQL) : {{ categorie_apogee }} / {{ produit.liencate }}</li>
+            <li>Caractéristique (Apogee/MySQL) : {{ caracteristique_apogee }} / {{ produit.liencpro }}</li>
+            <li>Type (Apogee/MySQL) : {{ type_apogee }} / {{ produit.type }}</li>
+        </ul>
+        <small class="text-muted">Synchronisation automatique : toute modification dans Apogee ou MySQL doit être répercutée dans l’autre système.</small>
+    </div>
+</div>
+
+{% endblock %}

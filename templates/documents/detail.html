@@ -1,0 +1,692 @@
+{% extends "base.html" %}
+
+{% block title %}Détail {{ document.type_label }} #{{ document.numero }} - SEILite{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/documents.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête du document -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas {{ document.type_icon }} me-2"></i>
+                            {{ document.type_label }} #{{ document.numero }}
+                            <span class="badge badge-{{ document.statut_color }} ms-2">{{ document.statut_label }}</span>
+                        </h4>
+                        <small class="text-muted">{{ document.module_label }} | Créé le {{ document.date_creation.strftime('%d/%m/%Y à %H:%M') }}</small>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="window.location.href='{{ url_for('documents.modifier', id=document.id) }}'">
+                            <i class="fas fa-edit"></i> Modifier
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.href='{{ url_for('documents.dupliquer', id=document.id) }}'">
+                            <i class="fas fa-copy"></i> Dupliquer
+                        </button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i> Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% if document.type_document in ['SOU', 'COM'] and document.statut != 'ANNULE' %}
+                                <li><a class="dropdown-item" href="#" onclick="convertirDocument('{{ document.id }}')">
+                                    <i class="fas fa-arrow-right"></i> Convertir en {{ 'Commande' if document.type_document == 'SOU' else 'Facture' }}
+                                </a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="#" onclick="imprimerDocument('{{ document.id }}')">
+                                    <i class="fas fa-print"></i> Imprimer
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="envoyerEmail('{{ document.id }}')">
+                                    <i class="fas fa-envelope"></i> Envoyer par email
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exporterPDF('{{ document.id }}')">
+                                    <i class="fas fa-file-pdf"></i> Exporter PDF
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% if document.statut != 'ANNULE' %}
+                                <li><a class="dropdown-item text-danger" href="#" onclick="annulerDocument('{{ document.id }}')">
+                                    <i class="fas fa-ban"></i> Annuler
+                                </a></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.location.href='{{ url_for('documents.liste') }}'">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal avec onglets -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-0">
+                    <!-- Navigation par onglets -->
+                    <ul class="nav nav-tabs" id="documentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
+                                <i class="fas fa-info-circle"></i> Général
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="lignes-tab" data-bs-toggle="tab" data-bs-target="#lignes" type="button" role="tab">
+                                <i class="fas fa-list"></i> Lignes ({{ document.lignes|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="totaux-tab" data-bs-toggle="tab" data-bs-target="#totaux" type="button" role="tab">
+                                <i class="fas fa-calculator"></i> Totaux
+                            </button>
+                        </li>
+                        {% if document.module in ['WO', 'LO'] %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="planification-tab" data-bs-toggle="tab" data-bs-target="#planification" type="button" role="tab">
+                                <i class="fas fa-calendar-alt"></i> Planification
+                            </button>
+                        </li>
+                        {% endif %}
+                        {% if document.module == 'VE' %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="contrat-tab" data-bs-toggle="tab" data-bs-target="#contrat" type="button" role="tab">
+                                <i class="fas fa-file-contract"></i> Contrat
+                            </button>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="historique-tab" data-bs-toggle="tab" data-bs-target="#historique" type="button" role="tab">
+                                <i class="fas fa-history"></i> Historique
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Contenu des onglets -->
+                    <div class="tab-content" id="documentTabsContent">
+                        <!-- Onglet Général -->
+                        <div class="tab-pane fade show active" id="general" role="tabpanel">
+                            <div class="p-4">
+                                <div class="row">
+                                    <!-- Informations document -->
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-file-alt"></i> Informations du document</h5>
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <td><strong>Numéro :</strong></td>
+                                                <td>{{ document.numero }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Type :</strong></td>
+                                                <td>{{ document.type_label }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Module :</strong></td>
+                                                <td>{{ document.module_label }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Statut :</strong></td>
+                                                <td><span class="badge badge-{{ document.statut_color }}">{{ document.statut_label }}</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Date :</strong></td>
+                                                <td>{{ document.date_document.strftime('%d/%m/%Y') }}</td>
+                                            </tr>
+                                            {% if document.date_echeance %}
+                                            <tr>
+                                                <td><strong>Échéance :</strong></td>
+                                                <td>{{ document.date_echeance.strftime('%d/%m/%Y') }}</td>
+                                            </tr>
+                                            {% endif %}
+                                            {% if document.reference_client %}
+                                            <tr>
+                                                <td><strong>Ref. client :</strong></td>
+                                                <td>{{ document.reference_client }}</td>
+                                            </tr>
+                                            {% endif %}
+                                        </table>
+                                    </div>
+
+                                    <!-- Informations client -->
+                                    <div class="col-md-6">
+                                        <h5><i class="fas fa-user"></i> Client</h5>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{ document.client_nom }}</h6>
+                                                {% if document.client_adresse %}
+                                                <p class="card-text small">
+                                                    {{ document.client_adresse }}<br>
+                                                    {% if document.client_ville %}{{ document.client_ville }}{% endif %}
+                                                    {% if document.client_code_postal %} {{ document.client_code_postal }}{% endif %}<br>
+                                                    {% if document.client_telephone %}Tél: {{ document.client_telephone }}<br>{% endif %}
+                                                    {% if document.client_email %}Email: {{ document.client_email }}{% endif %}
+                                                </p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if document.description %}
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h5><i class="fas fa-comment"></i> Description</h5>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                {{ document.description|nl2br }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Onglet Lignes -->
+                        <div class="tab-pane fade" id="lignes" role="tabpanel">
+                            <div class="p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5><i class="fas fa-list"></i> Lignes du document</h5>
+                                    <span class="badge bg-info">{{ document.lignes|length }} ligne(s)</span>
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th width="5%">#</th>
+                                                <th width="15%">Code</th>
+                                                <th width="35%">Désignation</th>
+                                                <th width="10%" class="text-center">Qté</th>
+                                                <th width="10%">Unité</th>
+                                                <th width="12%" class="text-end">Prix Unit.</th>
+                                                <th width="8%" class="text-center">Remise</th>
+                                                <th width="15%" class="text-end">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for ligne in document.lignes %}
+                                            <tr>
+                                                <td>{{ ligne.numero_ligne }}</td>
+                                                <td>
+                                                    {% if ligne.code_produit %}
+                                                    <code>{{ ligne.code_produit }}</code>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <strong>{{ ligne.designation }}</strong>
+                                                    {% if ligne.description %}
+                                                    <br><small class="text-muted">{{ ligne.description }}</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">{{ ligne.quantite|floatformat:2 }}</td>
+                                                <td>{{ ligne.unite or '-' }}</td>
+                                                <td class="text-end">{{ ligne.prix_unitaire|floatformat:2 }} €</td>
+                                                <td class="text-center">
+                                                    {% if ligne.remise_pourcentage %}
+                                                    {{ ligne.remise_pourcentage|floatformat:1 }}%
+                                                    {% else %}
+                                                    -
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-end">
+                                                    <strong>{{ ligne.total_ligne|floatformat:2 }} €</strong>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Totaux -->
+                        <div class="tab-pane fade" id="totaux" role="tabpanel">
+                            <div class="p-4">
+                                <div class="row justify-content-end">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h5><i class="fas fa-calculator"></i> Récapitulatif des montants</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <table class="table table-sm">
+                                                    <tr>
+                                                        <td><strong>Total HT :</strong></td>
+                                                        <td class="text-end">{{ document.total_ht|floatformat:2 }} €</td>
+                                                    </tr>
+                                                    {% if document.remise_globale %}
+                                                    <tr>
+                                                        <td>Remise globale ({{ document.remise_globale_pourcentage|floatformat:1 }}%) :</td>
+                                                        <td class="text-end">-{{ document.remise_globale|floatformat:2 }} €</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>Total après remise :</strong></td>
+                                                        <td class="text-end">{{ (document.total_ht - document.remise_globale)|floatformat:2 }} €</td>
+                                                    </tr>
+                                                    {% endif %}
+                                                    <tr>
+                                                        <td>TVA ({{ document.taux_tva|floatformat:1 }}%) :</td>
+                                                        <td class="text-end">{{ document.montant_tva|floatformat:2 }} €</td>
+                                                    </tr>
+                                                    <tr class="table-primary">
+                                                        <td><strong>TOTAL TTC :</strong></td>
+                                                        <td class="text-end"><strong>{{ document.total_ttc|floatformat:2 }} €</strong></td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        {% if document.module in ['WO', 'LO', 'VE'] %}
+                                        <div class="card mt-3">
+                                            <div class="card-header">
+                                                <h6><i class="fas fa-info-circle"></i> Informations complémentaires</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                {% if document.module == 'WO' %}
+                                                <p><strong>Temps estimé :</strong> {{ document.temps_estime or 'Non défini' }}</p>
+                                                <p><strong>Priorité :</strong> {{ document.priorite_label or 'Normale' }}</p>
+                                                {% elif document.module == 'LO' %}
+                                                <p><strong>Période de location :</strong> 
+                                                    {% if document.date_debut and document.date_fin %}
+                                                    Du {{ document.date_debut.strftime('%d/%m/%Y') }} au {{ document.date_fin.strftime('%d/%m/%Y') }}
+                                                    {% else %}
+                                                    Non définie
+                                                    {% endif %}
+                                                </p>
+                                                {% elif document.module == 'VE' %}
+                                                <p><strong>Conditions de paiement :</strong> {{ document.conditions_paiement or 'Standard' }}</p>
+                                                <p><strong>Garantie :</strong> {{ document.duree_garantie or 'Standard' }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Planification (WO/LO) -->
+                        {% if document.module in ['WO', 'LO'] %}
+                        <div class="tab-pane fade" id="planification" role="tabpanel">
+                            <div class="p-4">
+                                <h5><i class="fas fa-calendar-alt"></i> Planification</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6>Dates importantes</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                {% if document.module == 'WO' %}
+                                                <p><strong>Date de début prévue :</strong> {{ document.date_debut_prevue.strftime('%d/%m/%Y') if document.date_debut_prevue else 'Non définie' }}</p>
+                                                <p><strong>Date de fin prévue :</strong> {{ document.date_fin_prevue.strftime('%d/%m/%Y') if document.date_fin_prevue else 'Non définie' }}</p>
+                                                <p><strong>Technicien assigné :</strong> {{ document.technicien_assigne or 'Non assigné' }}</p>
+                                                {% elif document.module == 'LO' %}
+                                                <p><strong>Date de début :</strong> {{ document.date_debut.strftime('%d/%m/%Y') if document.date_debut else 'Non définie' }}</p>
+                                                <p><strong>Date de fin :</strong> {{ document.date_fin.strftime('%d/%m/%Y') if document.date_fin else 'Non définie' }}</p>
+                                                <p><strong>Durée :</strong> {{ document.duree_location or 'Non définie' }}</p>
+                                                <p><strong>Site de livraison :</strong> {{ document.site_livraison or 'Non défini' }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6>Statut d'avancement</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                {% if document.module == 'WO' %}
+                                                <div class="progress mb-3">
+                                                    <div class="progress-bar" role="progressbar" style="width: {{ document.pourcentage_avancement or 0 }}%">
+                                                        {{ document.pourcentage_avancement or 0 }}%
+                                                    </div>
+                                                </div>
+                                                <p><strong>Statut :</strong> {{ document.statut_travail or 'En attente' }}</p>
+                                                {% elif document.module == 'LO' %}
+                                                <p><strong>Statut de location :</strong> {{ document.statut_location or 'En préparation' }}</p>
+                                                <p><strong>Équipement préparé :</strong> {{ 'Oui' if document.equipement_prepare else 'Non' }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Onglet Contrat (VE) -->
+                        {% if document.module == 'VE' %}
+                        <div class="tab-pane fade" id="contrat" role="tabpanel">
+                            <div class="p-4">
+                                <h5><i class="fas fa-file-contract"></i> Informations contractuelles</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6>Conditions générales</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <p><strong>Conditions de paiement :</strong> {{ document.conditions_paiement or 'Standard' }}</p>
+                                                <p><strong>Mode de livraison :</strong> {{ document.mode_livraison or 'Standard' }}</p>
+                                                <p><strong>Délai de livraison :</strong> {{ document.delai_livraison or 'Standard' }}</p>
+                                                <p><strong>Garantie :</strong> {{ document.duree_garantie or 'Standard' }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6>Validité et signatures</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                {% if document.type_document == 'SOU' %}
+                                                <p><strong>Validité de l'offre :</strong> {{ document.validite_offre or '30 jours' }}</p>
+                                                {% endif %}
+                                                <p><strong>Date de signature :</strong> {{ document.date_signature.strftime('%d/%m/%Y') if document.date_signature else 'Non signée' }}</p>
+                                                <p><strong>Signataire client :</strong> {{ document.signataire_client or 'Non défini' }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Onglet Historique -->
+                        <div class="tab-pane fade" id="historique" role="tabpanel">
+                            <div class="p-4">
+                                <h5><i class="fas fa-history"></i> Historique des modifications</h5>
+                                
+                                <div class="timeline">
+                                    {% for event in document.historique %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-marker bg-{{ event.type_color }}">
+                                            <i class="fas {{ event.type_icon }}"></i>
+                                        </div>
+                                        <div class="timeline-content">
+                                            <h6 class="timeline-title">{{ event.titre }}</h6>
+                                            <p class="timeline-description">{{ event.description }}</p>
+                                            <small class="text-muted">
+                                                {{ event.date_creation.strftime('%d/%m/%Y à %H:%M') }}
+                                                {% if event.utilisateur %} - {{ event.utilisateur }}{% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<!-- Modal de conversion -->
+<div class="modal fade" id="modalConversion" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conversion du document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir convertir ce document ?</p>
+                <div class="form-group">
+                    <label>Date du nouveau document :</label>
+                    <input type="date" class="form-control" id="dateConversion" value="{{ date.today().isoformat() }}">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="confirmerConversion()">Convertir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'envoi d'email -->
+<div class="modal fade" id="modalEmail" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Envoyer par email</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEmail">
+                    <div class="mb-3">
+                        <label for="emailDestinataire" class="form-label">Destinataire :</label>
+                        <input type="email" class="form-control" id="emailDestinataire" value="{{ document.client_email or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="emailSujet" class="form-label">Sujet :</label>
+                        <input type="text" class="form-control" id="emailSujet" value="{{ document.type_label }} #{{ document.numero }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="emailMessage" class="form-label">Message :</label>
+                        <textarea class="form-control" id="emailMessage" rows="5">Veuillez trouver en pièce jointe votre {{ document.type_label|lower }} n°{{ document.numero }}.
+
+Cordialement,
+L'équipe SEILite</textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="includrePDF" checked>
+                        <label class="form-check-label" for="includrePDF">
+                            Inclure le PDF en pièce jointe
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="envoyerEmailDocument()">Envoyer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialisation des tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+function convertirDocument(documentId) {
+    $('#modalConversion').modal('show');
+    window.currentDocumentId = documentId;
+}
+
+function confirmerConversion() {
+    var dateConversion = $('#dateConversion').val();
+    
+    $.ajax({
+        url: '/documents/convertir/' + window.currentDocumentId,
+        method: 'POST',
+        data: {
+            date_conversion: dateConversion
+        },
+        success: function(response) {
+            if (response.success) {
+                showAlert('success', 'Document converti avec succès !');
+                $('#modalConversion').modal('hide');
+                // Redirection vers le nouveau document
+                setTimeout(function() {
+                    window.location.href = '/documents/detail/' + response.nouveau_document_id;
+                }, 1500);
+            } else {
+                showAlert('danger', 'Erreur lors de la conversion : ' + response.message);
+            }
+        },
+        error: function() {
+            showAlert('danger', 'Erreur de communication avec le serveur.');
+        }
+    });
+}
+
+function imprimerDocument(documentId) {
+    window.open('/documents/imprimer/' + documentId, '_blank');
+}
+
+function envoyerEmail(documentId) {
+    $('#modalEmail').modal('show');
+    window.currentDocumentId = documentId;
+}
+
+function envoyerEmailDocument() {
+    var formData = {
+        destinataire: $('#emailDestinataire').val(),
+        sujet: $('#emailSujet').val(),
+        message: $('#emailMessage').val(),
+        inclure_pdf: $('#includrePDF').is(':checked')
+    };
+    
+    $.ajax({
+        url: '/documents/envoyer-email/' + window.currentDocumentId,
+        method: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                showAlert('success', 'Email envoyé avec succès !');
+                $('#modalEmail').modal('hide');
+            } else {
+                showAlert('danger', 'Erreur lors de l\'envoi : ' + response.message);
+            }
+        },
+        error: function() {
+            showAlert('danger', 'Erreur de communication avec le serveur.');
+        }
+    });
+}
+
+function exporterPDF(documentId) {
+    window.open('/documents/export-pdf/' + documentId, '_blank');
+}
+
+function annulerDocument(documentId) {
+    if (confirm('Êtes-vous sûr de vouloir annuler ce document ?')) {
+        $.ajax({
+            url: '/documents/annuler/' + documentId,
+            method: 'POST',
+            success: function(response) {
+                if (response.success) {
+                    showAlert('success', 'Document annulé avec succès !');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showAlert('danger', 'Erreur lors de l\'annulation : ' + response.message);
+                }
+            },
+            error: function() {
+                showAlert('danger', 'Erreur de communication avec le serveur.');
+            }
+        });
+    }
+}
+
+function showAlert(type, message) {
+    var alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Afficher l'alerte en haut de la page
+    $('.container-fluid').prepend(alertHtml);
+    
+    // Auto-hide après 5 secondes
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+}
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    padding: 0;
+    list-style: none;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 60px;
+}
+
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 0;
+    bottom: -30px;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item:last-child:before {
+    display: none;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #007bff;
+}
+
+.timeline-title {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.timeline-description {
+    margin: 0 0 10px 0;
+    color: #6c757d;
+}
+
+.badge-BROUILLON { background-color: #6c757d; }
+.badge-CONFIRME { background-color: #17a2b8; }
+.badge-EN_COURS { background-color: #ffc107; color: #000; }
+.badge-TERMINE { background-color: #28a745; }
+.badge-ANNULE { background-color: #dc3545; }
+.badge-FACTURE { background-color: #007bff; }
+</style>
+
+<script src="{{ url_for('static', filename='js/documents.js') }}"></script>
+{% endblock %}

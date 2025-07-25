@@ -1,0 +1,311 @@
+<!-- Modal pour créer un nouveau véhicule -->
+<div class="modal fade" id="modalNouveauVehicule" tabindex="-1" aria-labelledby="modalNouveauVehiculeLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalNouveauVehiculeLabel">
+                    <i class="fas fa-plus-circle"></i> Nouveau Véhicule
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formNouveauVehicule" method="POST" action="{{ url_for('vehicules.nouveau_vehicule') }}">
+                <div class="modal-body">
+                    <!-- Champs obligatoires en premier -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Les champs marqués d'un <span class="text-danger">*</span> sont obligatoires.
+                    </div>
+
+                    <!-- Identification -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-id-card"></i> Identification</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">N° Unité *</label>
+                                    <input type="text" name="unite" class="form-control bg-warning bg-opacity-25" 
+                                           required maxlength="20" placeholder="Ex: CAM001">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Type *</label>
+                                    <select name="type" class="form-select" required>
+                                        <option value="">Sélectionner...</option>
+                                        <option value="CAMION">Camion</option>
+                                        <option value="REMORQUE">Remorque</option>
+                                        <option value="VOITURE">Voiture</option>
+                                        <option value="EQUIPEMENT">Équipement</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Statut *</label>
+                                    <select name="statut" class="form-select" required>
+                                        <option value="INTERNE" selected>Interne</option>
+                                        <option value="VENDU">Vendu</option>
+                                        <option value="LOUE">Loué</option>
+                                        <option value="REPARATION">En réparation</option>
+                                        <option value="DESACTIVE">Désactivé</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Année</label>
+                                    <input type="number" name="annee" class="form-control" min="1900" max="2030">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">N° Série</label>
+                                    <input type="text" name="serie" class="form-control" maxlength="50">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Licence</label>
+                                    <input type="text" name="licence" class="form-control" maxlength="20">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spécifications techniques -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-cogs"></i> Spécifications Techniques</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Marque</label>
+                                    <input type="text" name="marque" class="form-control" maxlength="30">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Modèle</label>
+                                    <input type="text" name="modele" class="form-control" maxlength="30">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Combustion</label>
+                                    <select name="combustion" class="form-select">
+                                        <option value="">Non défini</option>
+                                        <option value="ESSENCE">Essence</option>
+                                        <option value="DIESEL">Diesel</option>
+                                        <option value="ELECTRIQUE">Électrique</option>
+                                        <option value="HYBRIDE">Hybride</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Client -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-user"></i> Affectation Client</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Code client</label>
+                                    <input type="text" name="client" class="form-control" maxlength="20">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Nom</label>
+                                    <input type="text" name="nom" class="form-control" maxlength="50">
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">Téléphone</label>
+                                    <input type="text" name="tphone" class="form-control" maxlength="20">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="email" class="form-control" maxlength="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coûts -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-dollar-sign"></i> Coûts & Valeur</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Prix de vente</label>
+                                    <input type="number" step="0.01" name="prix" id="modalInputPrix" class="form-control">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Coût (CAD)</label>
+                                    <input type="number" step="0.01" name="cout" id="modalInputCout" class="form-control">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Profit calculé</label>
+                                    <input type="number" step="0.01" name="profit" id="modalInputProfit" 
+                                           class="form-control text-bg-info" readonly>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dates importantes -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-calendar"></i> Dates</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Date d'achat</label>
+                                    <input type="date" name="date_ach" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Fournisseur</label>
+                                    <input type="text" name="four" class="form-control" maxlength="50">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remarques -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-comment"></i> Remarques</h6>
+                        </div>
+                        <div class="card-body">
+                            <label class="form-label">Remarques générales</label>
+                            <textarea name="remarque" class="form-control" rows="3" 
+                                      placeholder="Ajoutez ici toute information importante..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Créer le véhicule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Calcul automatique du profit dans le modal
+    const modalInputPrix = document.getElementById('modalInputPrix');
+    const modalInputCout = document.getElementById('modalInputCout');
+    const modalInputProfit = document.getElementById('modalInputProfit');
+    
+    function calculerProfitModal() {
+        const prix = parseFloat(modalInputPrix.value) || 0;
+        const cout = parseFloat(modalInputCout.value) || 0;
+        const profit = prix - cout;
+        modalInputProfit.value = profit.toFixed(2);
+    }
+    
+    if (modalInputPrix) modalInputPrix.addEventListener('input', calculerProfitModal);
+    if (modalInputCout) modalInputCout.addEventListener('input', calculerProfitModal);
+    
+    // Auto-uppercase pour le numéro d'unité
+    const uniteInput = document.querySelector('#modalNouveauVehicule input[name="unite"]');
+    if (uniteInput) {
+        uniteInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    
+    // Gestion de la soumission du formulaire
+    const form = document.getElementById('formNouveauVehicule');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Afficher un indicateur de chargement
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+            submitBtn.disabled = true;
+            
+            // Soumettre le formulaire via AJAX
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // Si ce n'est pas du JSON, c'est probablement une redirection
+                    throw new Error('Not JSON response');
+                }
+            })
+            .then(data => {
+                if (data && data.success) {
+                    // Fermer le modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('modalNouveauVehicule'));
+                    modal.hide();
+                    
+                    // Afficher un message de succès
+                    showAlert('success', data.message || 'Véhicule créé avec succès!');
+                    
+                    // Recharger la liste si on est sur la page des véhicules
+                    if (window.location.pathname.includes('/vehicules')) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }
+                } else {
+                    showAlert('danger', data.message || 'Erreur lors de la création du véhicule.');
+                }
+            })
+            .catch(() => {
+                // Si ce n'est pas du JSON, soumettre normalement
+                form.submit();
+            })
+            .finally(() => {
+                // Restaurer le bouton
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+});
+
+// Fonction pour afficher des alertes
+function showAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insérer l'alerte en haut de la page
+    const container = document.querySelector('.container-fluid') || document.body;
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+    
+    // Supprimer l'alerte après 5 secondes
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Réinitialiser le formulaire quand le modal est fermé
+document.getElementById('modalNouveauVehicule').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('formNouveauVehicule').reset();
+    document.getElementById('modalInputProfit').value = '';
+});
+</script>

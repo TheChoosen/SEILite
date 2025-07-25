@@ -1,0 +1,500 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if client and not dupliquer %}Modifier {{ client.client }}{% else %}Nouveau Client{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-{{ 'edit' if client and not dupliquer else 'plus' }}"></i>
+        {% if client and not dupliquer %}
+            Modifier le Client - {{ client.client }}
+        {% elif dupliquer %}
+            Dupliquer le Client - {{ client.client }}
+        {% else %}
+            Nouveau Client
+        {% endif %}
+    </h1>
+    <div>
+        <a href="{{ url_for('clients.liste_clients') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+        {% if client and not dupliquer %}
+        <a href="{{ url_for('clients.detail_client', id=client.id) }}" class="btn btn-outline-info">
+            <i class="fas fa-eye"></i> Voir
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    {% if client and not dupliquer %}
+    <input type="hidden" name="id" value="{{ client.id }}">
+    {% endif %}
+    
+    <!-- Identification -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-id-card"></i> Identification</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Code Client *</label>
+                    <input type="text" name="client" class="form-control bg-warning bg-opacity-25"
+                        value="{% if dupliquer %}{% else %}{{ client.client if client else '' }}{% endif %}"
+                        {% if client and not dupliquer %}readonly{% endif %} required maxlength="20">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Nom *</label>
+                    <input type="text" name="nom" class="form-control"
+                        value="{{ client.nom if client else '' }}" required maxlength="50">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Prénom</label>
+                    <input type="text" name="prenom" class="form-control"
+                        value="{{ client.prenom if client else '' }}" maxlength="30">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Entreprise</label>
+                    <input type="text" name="compagny" class="form-control"
+                        value="{{ client.compagny if client else '' }}" maxlength="50">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <label class="form-label">ID Fidélité</label>
+                    <input type="text" name="loyalid" class="form-control"
+                        value="{{ client.loyalid if client else '' }}" maxlength="20">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Langue</label>
+                    <select name="langue" class="form-select">
+                        <option value="FR" {{ 'selected' if not client or client.langue == 'FR' }}>Français</option>
+                        <option value="EN" {{ 'selected' if client and client.langue == 'EN' }}>Anglais</option>
+                        <option value="ES" {{ 'selected' if client and client.langue == 'ES' }}>Espagnol</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Statut</label>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" name="actif" id="actif"
+                            {{ 'checked' if not client or (client.actif and not client.arret) }}>
+                        <label class="form-check-label" for="actif">Client actif</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Monnaie</label>
+                    <select name="mon" class="form-select">
+                        <option value="CAD" {{ 'selected' if not client or client.mon == 'CAD' }}>CAD</option>
+                        <option value="USD" {{ 'selected' if client and client.mon == 'USD' }}>USD</option>
+                        <option value="EUR" {{ 'selected' if client and client.mon == 'EUR' }}>EUR</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coordonnées -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-map-marker-alt"></i> Coordonnées</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Adresse 1</label>
+                    <input type="text" name="adr1" class="form-control"
+                        value="{{ client.adr1 if client else '' }}" maxlength="100">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Adresse 2</label>
+                    <input type="text" name="adr2" class="form-control"
+                        value="{{ client.adr2 if client else '' }}" maxlength="100">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label">Ville</label>
+                    <input type="text" name="ville" class="form-control"
+                        value="{{ client.ville if client else '' }}" maxlength="50">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Code postal</label>
+                    <input type="text" name="cp1" class="form-control"
+                        value="{{ client.cp1 if client else '' }}" maxlength="10">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Province</label>
+                    <select name="prov" class="form-select">
+                        <option value="">Sélectionner...</option>
+                        <option value="QC" {{ 'selected' if client and client.prov == 'QC' }}>Québec</option>
+                        <option value="ON" {{ 'selected' if client and client.prov == 'ON' }}>Ontario</option>
+                        <option value="BC" {{ 'selected' if client and client.prov == 'BC' }}>Colombie-Britannique</option>
+                        <option value="AB" {{ 'selected' if client and client.prov == 'AB' }}>Alberta</option>
+                        <option value="MB" {{ 'selected' if client and client.prov == 'MB' }}>Manitoba</option>
+                        <option value="SK" {{ 'selected' if client and client.prov == 'SK' }}>Saskatchewan</option>
+                        <option value="NS" {{ 'selected' if client and client.prov == 'NS' }}>Nouvelle-Écosse</option>
+                        <option value="NB" {{ 'selected' if client and client.prov == 'NB' }}>Nouveau-Brunswick</option>
+                        <option value="NL" {{ 'selected' if client and client.prov == 'NL' }}>Terre-Neuve-et-Labrador</option>
+                        <option value="PE" {{ 'selected' if client and client.prov == 'PE' }}>Île-du-Prince-Édouard</option>
+                        <option value="YT" {{ 'selected' if client and client.prov == 'YT' }}>Yukon</option>
+                        <option value="NT" {{ 'selected' if client and client.prov == 'NT' }}>Territoires du Nord-Ouest</option>
+                        <option value="NU" {{ 'selected' if client and client.prov == 'NU' }}>Nunavut</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Pays</label>
+                    <input type="text" name="pays" class="form-control"
+                        value="{{ client.pays if client else 'Canada' }}" maxlength="20">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <label class="form-label">Téléphone</label>
+                    <input type="tel" name="tphone" class="form-control"
+                        value="{{ client.tphone if client else '' }}" maxlength="20">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Cellulaire</label>
+                    <input type="tel" name="telcel" class="form-control"
+                        value="{{ client.telcel if client else '' }}" maxlength="20">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control"
+                        value="{{ client.email if client else '' }}" maxlength="100">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fax</label>
+                    <input type="tel" name="fax" class="form-control"
+                        value="{{ client.fax if client else '' }}" maxlength="20">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Personne contact</label>
+                    <input type="text" name="contact" class="form-control"
+                        value="{{ client.contact if client else '' }}" maxlength="50">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tél. contact</label>
+                    <input type="tel" name="telcon" class="form-control"
+                        value="{{ client.telcon if client else '' }}" maxlength="20">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Données commerciales -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-handshake"></i> Données Commerciales</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Vendeur</label>
+                    <input type="text" name="vendeur" class="form-control"
+                        value="{{ client.vendeur if client else '' }}" maxlength="30">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select name="type" class="form-select">
+                        <option value="">Sélectionner...</option>
+                        <option value="PARTICULIER" {{ 'selected' if client and client.type == 'PARTICULIER' }}>Particulier</option>
+                        <option value="ENTREPRISE" {{ 'selected' if client and client.type == 'ENTREPRISE' }}>Entreprise</option>
+                        <option value="GOUVERNEMENT" {{ 'selected' if client and client.type == 'GOUVERNEMENT' }}>Gouvernement</option>
+                        <option value="ORGANISME" {{ 'selected' if client and client.type == 'ORGANISME' }}>Organisme</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Catégorie</label>
+                    <select name="cat" class="form-select">
+                        <option value="">Sélectionner...</option>
+                        <option value="A" {{ 'selected' if client and client.cat == 'A' }}>A - Premium</option>
+                        <option value="B" {{ 'selected' if client and client.cat == 'B' }}>B - Standard</option>
+                        <option value="C" {{ 'selected' if client and client.cat == 'C' }}>C - Basic</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Groupe</label>
+                    <input type="text" name="groupe" class="form-control"
+                        value="{{ client.groupe if client else '' }}" maxlength="20">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label">Termes</label>
+                    <select name="termes" class="form-select">
+                        <option value="">Sélectionner...</option>
+                        <option value="NET 30" {{ 'selected' if client and client.termes == 'NET 30' }}>Net 30 jours</option>
+                        <option value="NET 15" {{ 'selected' if client and client.termes == 'NET 15' }}>Net 15 jours</option>
+                        <option value="COD" {{ 'selected' if client and client.termes == 'COD' }}>COD (Cash on Delivery)</option>
+                        <option value="PREPAYE" {{ 'selected' if client and client.termes == 'PREPAYE' }}>Prépayé</option>
+                        <option value="2/10 NET 30" {{ 'selected' if client and client.termes == '2/10 NET 30' }}>2/10 Net 30</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Limite crédit</label>
+                    <input type="number" step="0.01" name="limcre" class="form-control"
+                        value="{{ client.limcre if client else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Dépôt requis</label>
+                    <input type="number" step="0.01" name="depot" class="form-control"
+                        value="{{ client.depot if client else '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Taxes -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-calculator"></i> Configuration Taxes</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="notaxfed" id="notaxfed"
+                            {{ 'checked' if client and client.notaxfed }}>
+                        <label class="form-check-label" for="notaxfed">
+                            Exempté taxe fédérale
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="notaxpro" id="notaxpro"
+                            {{ 'checked' if client and client.notaxpro }}>
+                        <label class="form-check-label" for="notaxpro">
+                            Exempté taxe provinciale
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Taux spécial (%)</label>
+                    <input type="number" step="0.01" name="taux" class="form-control"
+                        value="{{ client.taux if client else '' }}" min="0" max="100">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dates importantes -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-calendar"></i> Dates Importantes</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Date de naissance</label>
+                    <input type="date" name="datenais" class="form-control"
+                        value="{% if client and client.datenais %}{% if client.datenais.strftime is defined %}{{ client.datenais.strftime('%Y-%m-%d') }}{% else %}{{ client.datenais }}{% endif %}{% endif %}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Date d'expiration</label>
+                    <input type="date" name="dateexp" class="form-control"
+                        value="{% if client and client.dateexp %}{% if client.dateexp.strftime is defined %}{{ client.dateexp.strftime('%Y-%m-%d') }}{% else %}{{ client.dateexp }}{% endif %}{% endif %}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CRM et remarques -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-tags"></i> CRM & Remarques</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Mot-clé 1</label>
+                    <input type="text" name="motcle1" class="form-control"
+                        value="{{ client.motcle1 if client else '' }}" maxlength="50">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Mot-clé 2</label>
+                    <input type="text" name="motcle2" class="form-control"
+                        value="{{ client.motcle2 if client else '' }}" maxlength="50">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Commentaire 1</label>
+                    <textarea name="comment" class="form-control" rows="3">{{ client.comment if client else '' }}</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Commentaire 2</label>
+                    <textarea name="comment2" class="form-control" rows="3">{{ client.comment2 if client else '' }}</textarea>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Remarque 1</label>
+                    <textarea name="rem1" class="form-control" rows="3">{{ client.rem1 if client else '' }}</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Remarque 2</label>
+                    <textarea name="rem2" class="form-control" rows="3">{{ client.rem2 if client else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sécurité et fichiers -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-shield-alt"></i> Sécurité & Fichiers</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Répertoire envoi</label>
+                    <input type="text" name="repenvoie" class="form-control"
+                        value="{{ client.repenvoie if client else '' }}" maxlength="100">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Répertoire sortie</label>
+                    <input type="text" name="repsortie" class="form-control"
+                        value="{{ client.repsortie if client else '' }}" maxlength="100">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">FTP</label>
+                    <input type="text" name="ftp" class="form-control"
+                        value="{{ client.ftp if client else '' }}" maxlength="100">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label">Mot de passe</label>
+                    <input type="password" name="motpasse" class="form-control"
+                        value="{{ client.motpasse if client else '' }}" maxlength="50">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Permis</label>
+                    <input type="text" name="permis" class="form-control"
+                        value="{{ client.permis if client else '' }}" maxlength="30">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Carte</label>
+                    <input type="text" name="carte" class="form-control"
+                        value="{{ client.carte if client else '' }}" maxlength="50">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations système -->
+    {% if client and not dupliquer %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-info"></i> Informations Système</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Créé le</label>
+                    <input type="text" class="form-control text-bg-info"
+                        value="{% if client.datecr %}{% if client.datecr.strftime is defined %}{{ client.datecr.strftime('%d/%m/%Y %H:%M') }}{% else %}{{ client.datecr }}{% endif %}{% endif %}"
+                        readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ID</label>
+                    <input type="text" class="form-control text-bg-info"
+                        value="{{ client.id }}" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Statut actuel</label>
+                    <input type="text" class="form-control text-bg-info"
+                        value="{% if client.actif and not client.arret %}Actif{% else %}Inactif{% endif %}" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Boutons d'action -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> 
+                        {% if client and not dupliquer %}Modifier{% else %}Créer{% endif %} le client
+                    </button>
+                    <a href="{{ url_for('clients.liste_clients') }}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+                <div>
+                    {% if client and not dupliquer %}
+                    <button type="button" class="btn btn-warning me-2" onclick="confirmerDesactivation()">
+                        <i class="fas fa-ban"></i> Désactiver
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="dupliquerClient()">
+                        <i class="fas fa-copy"></i> Dupliquer
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% if client and not dupliquer %}
+<!-- Modal de confirmation de désactivation -->
+<div class="modal fade" id="modalDesactivation" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la désactivation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir désactiver le client <strong>{{ client.client }}</strong> ?</p>
+                <p class="text-warning"><i class="fas fa-exclamation-triangle"></i> Le client sera archivé mais pourra être réactivé plus tard.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="POST" action="{{ url_for('clients.desactiver_client', id=client.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-ban"></i> Désactiver
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    {% if client and not dupliquer %}
+    function confirmerDesactivation() {
+        new bootstrap.Modal(document.getElementById('modalDesactivation')).show();
+    }
+    
+    function dupliquerClient() {
+        if (confirm('Voulez-vous créer une copie de ce client ?')) {
+            window.location.href = '{{ url_for("clients.dupliquer_client", id=client.id) }}';
+        }
+    }
+    {% endif %}
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Auto-uppercase pour le code client
+        const clientField = document.querySelector('input[name="client"]');
+        if (clientField) {
+            clientField.addEventListener('input', function () {
+                this.value = this.value.toUpperCase();
+            });
+        }
+    });
+</script>
+{% endblock %}

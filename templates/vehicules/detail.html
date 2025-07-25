@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+
+{% block title %}{{ vehicule.unite }} - Détail{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-car"></i> Véhicule - {{ vehicule.unite }}</h1>
+    <div>
+        <a href="{{ url_for('vehicules.liste_vehicules') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+        <a href="{{ url_for('vehicules.modifier_vehicule', id=vehicule.id) }}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Modifier
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informations principales -->
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h4>{{ vehicule.unite }}</h4>
+                <p class="text-muted">{{ vehicule.marque }} {{ vehicule.modele }}</p>
+                
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                    {% set statut_colors = {
+                        'INTERNE': 'success',
+                        'VENDU': 'info', 
+                        'LOUE': 'warning',
+                        'REPARATION': 'danger',
+                        'DESACTIVE': 'secondary'
+                    } %}
+                    <span class="badge bg-{{ statut_colors.get(vehicule.statut, 'secondary') }} fs-6">
+                        {{ vehicule.statut or 'N/A' }}
+                    </span>
+                    {% if vehicule.type %}
+                    <span class="badge bg-dark fs-6">{{ vehicule.type }}</span>
+                    {% endif %}
+                </div>
+                
+                {% if vehicule.prix %}
+                {% set prix_num = vehicule.prix|float %}
+                {% if prix_num > 0 %}
+                <h5 class="text-primary">{{ "{:,.0f}".format(prix_num) }} $</h5>
+                {% endif %}
+                {% endif %}
+                
+                {% if vehicule.profit %}
+                {% set profit_num = vehicule.profit|float %}
+                <p class="text-{{ 'success' if profit_num > 0 else 'danger' }}">
+                    Profit: {{ "{:,.0f}".format(profit_num) }} $
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Informations système -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-info"></i> Informations Système</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 mb-2">
+                        <strong>Créé le:</strong><br>
+                        <small class="text-muted">
+                            {% if vehicule.date_cree %}
+                                {% if vehicule.date_cree.strftime is defined %}
+                                    {{ vehicule.date_cree.strftime('%d/%m/%Y à %H:%M') }}
+                                {% else %}
+                                    {{ vehicule.date_cree }}
+                                {% endif %}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="col-12 mb-2">
+                        <strong>Modifié le:</strong><br>
+                        <small class="text-muted">
+                            {% if vehicule.date_modif %}
+                                {% if vehicule.date_modif.strftime is defined %}
+                                    {{ vehicule.date_modif.strftime('%d/%m/%Y à %H:%M') }}
+                                {% else %}
+                                    {{ vehicule.date_modif }}
+                                {% endif %}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% if vehicule.date_desac %}
+                    <div class="col-12">
+                        <strong>Désactivé le:</strong><br>
+                        <small class="text-danger">
+                            {% if vehicule.date_desac.strftime is defined %}
+                                {{ vehicule.date_desac.strftime('%d/%m/%Y à %H:%M') }}
+                            {% else %}
+                                {{ vehicule.date_desac }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Détails du véhicule -->
+    <div class="col-lg-8">
+        <!-- Identification -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-id-card"></i> Identification</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>N° Unité:</strong>
+                            <p>{{ vehicule.unite or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>N° Série:</strong>
+                            <p>{{ vehicule.serie or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Licence:</strong>
+                            <p>{{ vehicule.licence or '-' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Type:</strong>
+                            <p>{{ vehicule.type or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Année:</strong>
+                            <p>{{ vehicule.annee or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>État:</strong>
+                            <p>{{ vehicule.etat or '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spécifications techniques -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs"></i> Spécifications Techniques</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Marque:</strong>
+                            <p>{{ vehicule.marque or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Modèle:</strong>
+                            <p>{{ vehicule.modele or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Cabine:</strong>
+                            <p>{{ vehicule.cabine or '-' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Poids:</strong>
+                            <p>{{ vehicule.poids or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Combustion:</strong>
+                            <p>{{ vehicule.combustion or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Capacité:</strong>
+                            <p>{{ vehicule.capacite or '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client lié -->
+        {% if vehicule.client %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-user"></i> Client</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Code client:</strong>
+                            <p>{{ vehicule.client }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Nom:</strong>
+                            <p>{{ vehicule.nom or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Téléphone:</strong>
+                            <p>{{ vehicule.tphone or '-' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Adresse:</strong>
+                            <p>{{ vehicule.adr1 or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Ville:</strong>
+                            <p>{{ vehicule.ville or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Email:</strong>
+                            <p>{{ vehicule.email or '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Dates et historique -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-calendar"></i> Dates & Historique</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Date d'achat:</strong>
+                            <p>
+                                {% if vehicule.date_ach %}
+                                    {% if vehicule.date_ach.strftime is defined %}
+                                        {{ vehicule.date_ach.strftime('%d/%m/%Y') }}
+                                    {% else %}
+                                        {{ vehicule.date_ach }}
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Date de vente:</strong>
+                            <p>
+                                {% if vehicule.date_vte %}
+                                    {% if vehicule.date_vte.strftime is defined %}
+                                        {{ vehicule.date_vte.strftime('%d/%m/%Y') }}
+                                    {% else %}
+                                        {{ vehicule.date_vte }}
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Fournisseur:</strong>
+                            <p>{{ vehicule.four or '-' }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>N° Facture:</strong>
+                            <p>{{ vehicule.nofacture or '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coûts et valeur -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-dollar-sign"></i> Coûts & Valeur</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if vehicule.prix or vehicule.cout or vehicule.coutu %}
+                        <table class="table table-sm">
+                            {% if vehicule.prix %}
+                            <tr>
+                                <td><strong>Prix de vente:</strong></td>
+                                <td class="text-end">{% set prix_num = vehicule.prix|float %}{{ "{:,.0f}".format(prix_num) }} $</td>
+                            </tr>
+                            {% endif %}
+                            {% if vehicule.cout %}
+                            <tr>
+                                <td><strong>Coût (CAD):</strong></td>
+                                <td class="text-end">{% set cout_num = vehicule.cout|float %}{{ "{:,.0f}".format(cout_num) }} $</td>
+                            </tr>
+                            {% endif %}
+                            {% if vehicule.coutu %}
+                            <tr>
+                                <td><strong>Coût (USD):</strong></td>
+                                <td class="text-end">{% set coutu_num = vehicule.coutu|float %}{{ "{:,.0f}".format(coutu_num) }} $</td>
+                            </tr>
+                            {% endif %}
+                            {% if vehicule.profit %}
+                            {% set profit_num = vehicule.profit|float %}
+                            <tr class="table-{{ 'success' if profit_num > 0 else 'danger' }}">
+                                <td><strong>Profit:</strong></td>
+                                <td class="text-end"><strong>{{ "{:,.0f}".format(profit_num) }} $</strong></td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                        {% else %}
+                        <p class="text-muted">Aucune information de coût</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {% if vehicule.devaluat %}
+                        <div class="mb-3">
+                            <strong>Dévaluation:</strong>
+                            {% set devaluat_num = vehicule.devaluat|float %}
+                            <p class="text-warning">{{ "{:,.0f}".format(devaluat_num) }} $</p>
+                        </div>
+                        {% endif %}
+                        {% if vehicule.taxfed or vehicule.taxpro %}
+                        <div class="mb-3">
+                            <strong>Taxes:</strong>
+                            <p>
+                                {% if vehicule.taxfed %}{% set taxfed_num = vehicule.taxfed|float %}Fédérale: {{ "{:,.0f}".format(taxfed_num) }} $<br>{% endif %}
+                                {% if vehicule.taxpro %}{% set taxpro_num = vehicule.taxpro|float %}Provinciale: {{ "{:,.0f}".format(taxpro_num) }} ${% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entretien -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-wrench"></i> Entretien</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <strong>Prochaine maintenance:</strong>
+                            {% if vehicule.duree %}
+                                {% set duree_num = vehicule.duree|int %}
+                                {% if duree_num > 0 %}
+                                    {% if duree_num <= 30 %}
+                                        <p class="text-danger">
+                                            <i class="fas fa-exclamation-triangle"></i> Dans {{ duree_num }} jours
+                                        </p>
+                                    {% elif duree_num <= 90 %}
+                                        <p class="text-warning">
+                                            <i class="fas fa-wrench"></i> Dans {{ duree_num }} jours
+                                        </p>
+                                    {% else %}
+                                        <p class="text-success">
+                                            <i class="fas fa-check"></i> Dans {{ duree_num }} jours
+                                        </p>
+                                    {% endif %}
+                                {% else %}
+                                    <p class="text-muted">Non définie</p>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-muted">Non définie</p>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <strong>Garantie:</strong>
+                            <p>{{ vehicule.garantie or '-' }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {% if vehicule.remunit %}
+                        <div class="mb-3">
+                            <strong>Remarque unité:</strong>
+                            <p>{{ vehicule.remunit }}</p>
+                        </div>
+                        {% endif %}
+                        {% if vehicule.remgarant %}
+                        <div class="mb-3">
+                            <strong>Remarque garantie:</strong>
+                            <p>{{ vehicule.remgarant }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Historique d'entretien -->
+                {% if vehicule.ent1 or vehicule.ent2 or vehicule.ent3 or vehicule.ent4 or vehicule.ent5 or vehicule.ent6 %}
+                <hr>
+                <h6>Historique d'entretien</h6>
+                <div class="row">
+                    {% for i in range(1, 7) %}
+                        {% if i == 1 and vehicule.ent1 %}
+                        <div class="col-md-4 mb-2">
+                            <div class="card border-info">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Entretien 1</small>
+                                    <p class="mb-0">{{ vehicule.ent1 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif i == 2 and vehicule.ent2 %}
+                        <div class="col-md-4 mb-2">
+                            <div class="card border-info">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Entretien 2</small>
+                                    <p class="mb-0">{{ vehicule.ent2 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif i == 3 and vehicule.ent3 %}
+                        <div class="col-md-4 mb-2">
+                            <div class="card border-info">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Entretien 3</small>
+                                    <p class="mb-0">{{ vehicule.ent3 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif i == 4 and vehicule.ent4 %}
+                        <div class="col-md-4 mb-2">
+                            <div class="card border-info">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Entretien 4</small>
+                                    <p class="mb-0">{{ vehicule.ent4 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif i == 5 and vehicule.ent5 %}
+                        <div class="col-md-4 mb-2">
+                            <div class="card border-info">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Entretien 5</small>
+                                    <p class="mb-0">{{ vehicule.ent5 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif i == 6 and vehicule.ent6 %}
+                        <div class="col-md-4 mb-2">
+                            <div class="card border-info">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Entretien 6</small>
+                                    <p class="mb-0">{{ vehicule.ent6 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Remarques -->
+        {% if vehicule.remarque %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-comment"></i> Remarques</h5>
+            </div>
+            <div class="card-body">
+                <p>{{ vehicule.remarque }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

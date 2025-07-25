@@ -1,0 +1,881 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Modifier' if document else 'Nouveau' }} {{ type_document_label }} - SEILite{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/documents.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête du formulaire -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0">
+                            <i class="fas {{ type_document_icon }} me-2"></i>
+                            {{ 'Modifier' if document else 'Nouveau' }} {{ type_document_label }}
+                            {% if document %}
+                            #{{ document.numero }}
+                            <span class="badge badge-{{ document.statut_color }} ms-2">{{ document.statut_label }}</span>
+                            {% endif %}
+                        </h4>
+                        <small class="text-muted">{{ module_label }}</small>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-success" onclick="sauvegarderDocument()">
+                            <i class="fas fa-save"></i> Sauvegarder
+                        </button>
+                        {% if document and document.statut == 'BROUILLON' %}
+                        <button type="button" class="btn btn-primary" onclick="confirmerDocument()">
+                            <i class="fas fa-check"></i> Confirmer
+                        </button>
+                        {% endif %}
+                        <button type="button" class="btn btn-outline-secondary" onclick="annulerModifications()">
+                            <i class="fas fa-times"></i> Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire principal -->
+    <form id="documentForm" method="POST" action="{{ url_for('documents.sauvegarder') }}">
+        {% if document %}
+        <input type="hidden" name="document_id" value="{{ document.id }}">
+        {% endif %}
+        <input type="hidden" name="module" value="{{ module }}">
+        <input type="hidden" name="type_document" value="{{ type_document }}">
+        
+        <div class="row">
+            <!-- Colonne gauche -->
+            <div class="col-lg-8">
+                <!-- Informations générales -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle"></i> Informations générales</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="numero" class="form-label">Numéro *</label>
+                                    <input type="text" class="form-control" id="numero" name="numero" 
+                                           value="{{ document.numero if document else '' }}" 
+                                           {{ 'readonly' if document else '' }}>
+                                    <div class="form-text">Généré automatiquement si vide</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="date_document" class="form-label">Date *</label>
+                                    <input type="date" class="form-control" id="date_document" name="date_document" 
+                                           value="{{ document.date_document.strftime('%Y-%m-%d') if document else date.today().isoformat() }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="date_echeance" class="form-label">Date d'échéance</label>
+                                    <input type="date" class="form-control" id="date_echeance" name="date_echeance" 
+                                           value="{{ document.date_echeance.strftime('%Y-%m-%d') if document and document.date_echeance else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="reference_client" class="form-label">Référence client</label>
+                                    <input type="text" class="form-control" id="reference_client" name="reference_client" 
+                                           value="{{ document.reference_client if document else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="statut" class="form-label">Statut</label>
+                                    <select class="form-select" id="statut" name="statut">
+                                        <option value="BROUILLON" {{ 'selected' if document and document.statut == 'BROUILLON' else '' }}>Brouillon</option>
+                                        <option value="CONFIRME" {{ 'selected' if document and document.statut == 'CONFIRME' else '' }}>Confirmé</option>
+                                        {% if type_document == 'COM' %}
+                                        <option value="EN_COURS" {{ 'selected' if document and document.statut == 'EN_COURS' else '' }}>En cours</option>
+                                        <option value="TERMINE" {{ 'selected' if document and document.statut == 'TERMINE' else '' }}>Terminé</option>
+                                        {% endif %}
+                                        <option value="ANNULE" {{ 'selected' if document and document.statut == 'ANNULE' else '' }}>Annulé</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ document.description if document else '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informations spécifiques au module -->
+                {% if module in ['WO', 'LO', 'VE'] %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>
+                            <i class="fas {{ 'fa-tools' if module == 'WO' else 'fa-calendar' if module == 'LO' else 'fa-handshake' }}"></i>
+                            Informations {{ 'de planification' if module in ['WO', 'LO'] else 'contractuelles' }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if module == 'WO' %}
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="priorite" class="form-label">Priorité</label>
+                                    <select class="form-select" id="priorite" name="priorite">
+                                        <option value="BASSE" {{ 'selected' if document and document.priorite == 'BASSE' else '' }}>Basse</option>
+                                        <option value="NORMALE" {{ 'selected' if document and document.priorite == 'NORMALE' else 'selected' }}>Normale</option>
+                                        <option value="HAUTE" {{ 'selected' if document and document.priorite == 'HAUTE' else '' }}>Haute</option>
+                                        <option value="URGENTE" {{ 'selected' if document and document.priorite == 'URGENTE' else '' }}>Urgente</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="temps_estime" class="form-label">Temps estimé (heures)</label>
+                                    <input type="number" class="form-control" id="temps_estime" name="temps_estime" 
+                                           value="{{ document.temps_estime if document else '' }}" step="0.5" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="technicien_assigne" class="form-label">Technicien assigné</label>
+                                    <select class="form-select" id="technicien_assigne" name="technicien_assigne">
+                                        <option value="">Non assigné</option>
+                                        <!-- Options des techniciens à charger dynamiquement -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="date_debut_prevue" class="form-label">Date de début prévue</label>
+                                    <input type="date" class="form-control" id="date_debut_prevue" name="date_debut_prevue" 
+                                           value="{{ document.date_debut_prevue.strftime('%Y-%m-%d') if document and document.date_debut_prevue else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="date_fin_prevue" class="form-label">Date de fin prévue</label>
+                                    <input type="date" class="form-control" id="date_fin_prevue" name="date_fin_prevue" 
+                                           value="{{ document.date_fin_prevue.strftime('%Y-%m-%d') if document and document.date_fin_prevue else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        {% elif module == 'LO' %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="date_debut" class="form-label">Date de début *</label>
+                                    <input type="date" class="form-control" id="date_debut" name="date_debut" 
+                                           value="{{ document.date_debut.strftime('%Y-%m-%d') if document and document.date_debut else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="date_fin" class="form-label">Date de fin *</label>
+                                    <input type="date" class="form-control" id="date_fin" name="date_fin" 
+                                           value="{{ document.date_fin.strftime('%Y-%m-%d') if document and document.date_fin else '' }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="site_livraison" class="form-label">Site de livraison</label>
+                                    <input type="text" class="form-control" id="site_livraison" name="site_livraison" 
+                                           value="{{ document.site_livraison if document else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="duree_location" class="form-label">Durée (jours)</label>
+                                    <input type="number" class="form-control" id="duree_location" name="duree_location" 
+                                           value="{{ document.duree_location if document else '' }}" min="1" readonly>
+                                    <div class="form-text">Calculée automatiquement</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif module == 'VE' %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="conditions_paiement" class="form-label">Conditions de paiement</label>
+                                    <select class="form-select" id="conditions_paiement" name="conditions_paiement">
+                                        <option value="COMPTANT" {{ 'selected' if document and document.conditions_paiement == 'COMPTANT' else '' }}>Comptant</option>
+                                        <option value="30_JOURS" {{ 'selected' if document and document.conditions_paiement == '30_JOURS' else 'selected' }}>30 jours</option>
+                                        <option value="60_JOURS" {{ 'selected' if document and document.conditions_paiement == '60_JOURS' else '' }}>60 jours</option>
+                                        <option value="90_JOURS" {{ 'selected' if document and document.conditions_paiement == '90_JOURS' else '' }}>90 jours</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="mode_livraison" class="form-label">Mode de livraison</label>
+                                    <select class="form-select" id="mode_livraison" name="mode_livraison">
+                                        <option value="RETRAIT" {{ 'selected' if document and document.mode_livraison == 'RETRAIT' else '' }}>Retrait magasin</option>
+                                        <option value="LIVRAISON" {{ 'selected' if document and document.mode_livraison == 'LIVRAISON' else 'selected' }}>Livraison</option>
+                                        <option value="TRANSPORTEUR" {{ 'selected' if document and document.mode_livraison == 'TRANSPORTEUR' else '' }}>Transporteur</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="delai_livraison" class="form-label">Délai de livraison</label>
+                                    <input type="text" class="form-control" id="delai_livraison" name="delai_livraison" 
+                                           value="{{ document.delai_livraison if document else '48h' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="duree_garantie" class="form-label">Durée de garantie</label>
+                                    <input type="text" class="form-control" id="duree_garantie" name="duree_garantie" 
+                                           value="{{ document.duree_garantie if document else '12 mois' }}">
+                                </div>
+                            </div>
+                        </div>
+                        {% if type_document == 'SOU' %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="validite_offre" class="form-label">Validité de l'offre</label>
+                                    <input type="text" class="form-control" id="validite_offre" name="validite_offre" 
+                                           value="{{ document.validite_offre if document else '30 jours' }}">
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Lignes du document -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-list"></i> Lignes du document</h5>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="ajouterLigne()">
+                            <i class="fas fa-plus"></i> Ajouter une ligne
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped mb-0" id="tableLignes">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="15%">Code</th>
+                                        <th width="30%">Désignation *</th>
+                                        <th width="10%">Qté *</th>
+                                        <th width="8%">Unité</th>
+                                        <th width="12%">Prix Unit. *</th>
+                                        <th width="8%">Remise %</th>
+                                        <th width="10%">Total</th>
+                                        <th width="5%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lignesContainer">
+                                    {% if document and document.lignes %}
+                                        {% for ligne in document.lignes %}
+                                        <tr data-ligne-id="{{ ligne.id }}" data-ligne-index="{{ loop.index0 }}">
+                                            <td>{{ loop.index }}</td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" 
+                                                       name="lignes[{{ loop.index0 }}][code_produit]" 
+                                                       value="{{ ligne.code_produit or '' }}"
+                                                       onchange="rechercherProduit(this)">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" 
+                                                       name="lignes[{{ loop.index0 }}][designation]" 
+                                                       value="{{ ligne.designation }}" required>
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm text-center" 
+                                                       name="lignes[{{ loop.index0 }}][quantite]" 
+                                                       value="{{ ligne.quantite }}" 
+                                                       step="0.01" min="0" required onchange="calculerLigne(this)">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" 
+                                                       name="lignes[{{ loop.index0 }}][unite]" 
+                                                       value="{{ ligne.unite or '' }}">
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm text-end" 
+                                                       name="lignes[{{ loop.index0 }}][prix_unitaire]" 
+                                                       value="{{ ligne.prix_unitaire }}" 
+                                                       step="0.01" min="0" required onchange="calculerLigne(this)">
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm text-center" 
+                                                       name="lignes[{{ loop.index0 }}][remise_pourcentage]" 
+                                                       value="{{ ligne.remise_pourcentage or 0 }}" 
+                                                       step="0.1" min="0" max="100" onchange="calculerLigne(this)">
+                                            </td>
+                                            <td class="text-end">
+                                                <span class="total-ligne">{{ ligne.total_ligne|floatformat:2 }}</span> €
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="supprimerLigne(this)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                    <tr class="ligne-vide">
+                                        <td colspan="9" class="text-center py-4">
+                                            <em>Aucune ligne. Cliquez sur "Ajouter une ligne" pour commencer.</em>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne droite -->
+            <div class="col-lg-4">
+                <!-- Informations client -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-user"></i> Client</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="rechercherClient()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="client_id" name="client_id" value="{{ document.client_id if document else '' }}">
+                        
+                        <div class="mb-3">
+                            <label for="client_nom" class="form-label">Nom *</label>
+                            <input type="text" class="form-control" id="client_nom" name="client_nom" 
+                                   value="{{ document.client_nom if document else '' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="client_adresse" class="form-label">Adresse</label>
+                            <textarea class="form-control" id="client_adresse" name="client_adresse" rows="2">{{ document.client_adresse if document else '' }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-8">
+                                <div class="mb-3">
+                                    <label for="client_ville" class="form-label">Ville</label>
+                                    <input type="text" class="form-control" id="client_ville" name="client_ville" 
+                                           value="{{ document.client_ville if document else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="mb-3">
+                                    <label for="client_code_postal" class="form-label">CP</label>
+                                    <input type="text" class="form-control" id="client_code_postal" name="client_code_postal" 
+                                           value="{{ document.client_code_postal if document else '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="client_telephone" class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="client_telephone" name="client_telephone" 
+                                   value="{{ document.client_telephone if document else '' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="client_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="client_email" name="client_email" 
+                                   value="{{ document.client_email if document else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Totaux -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-calculator"></i> Totaux</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Total HT :</strong></td>
+                                <td class="text-end"><span id="totalHT">{{ document.total_ht|floatformat:2 if document else '0.00' }}</span> €</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Remise globale :
+                                    <input type="number" class="form-control form-control-sm d-inline" 
+                                           name="remise_globale_pourcentage" id="remiseGlobale" 
+                                           value="{{ document.remise_globale_pourcentage or 0 }}"
+                                           step="0.1" min="0" max="100" style="width: 60px;" onchange="calculerTotaux()"> %
+                                </td>
+                                <td class="text-end">-<span id="montantRemise">{{ document.remise_globale|floatformat:2 if document else '0.00' }}</span> €</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total après remise :</strong></td>
+                                <td class="text-end"><span id="totalApresRemise">{{ (document.total_ht - (document.remise_globale or 0))|floatformat:2 if document else '0.00' }}</span> €</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    TVA :
+                                    <select class="form-select form-select-sm d-inline" name="taux_tva" id="tauxTVA" 
+                                            style="width: 80px;" onchange="calculerTotaux()">
+                                        <option value="0" {{ 'selected' if document and document.taux_tva == 0 else '' }}>0%</option>
+                                        <option value="5.5" {{ 'selected' if document and document.taux_tva == 5.5 else '' }}>5.5%</option>
+                                        <option value="10" {{ 'selected' if document and document.taux_tva == 10 else '' }}>10%</option>
+                                        <option value="20" {{ 'selected' if document and document.taux_tva == 20 else 'selected' }}>20%</option>
+                                    </select>
+                                </td>
+                                <td class="text-end"><span id="montantTVA">{{ document.montant_tva|floatformat:2 if document else '0.00' }}</span> €</td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td><strong>TOTAL TTC :</strong></td>
+                                <td class="text-end"><strong><span id="totalTTC">{{ document.total_ttc|floatformat:2 if document else '0.00' }}</span> €</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Actions rapides -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-bolt"></i> Actions rapides</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-info" onclick="previsualiserDocument()">
+                                <i class="fas fa-eye"></i> Prévisualiser
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="importerModele()">
+                                <i class="fas fa-file-import"></i> Importer modèle
+                            </button>
+                            {% if document %}
+                            <button type="button" class="btn btn-sm btn-outline-warning" onclick="creerCopie()">
+                                <i class="fas fa-copy"></i> Créer une copie
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modals -->
+<!-- Modal de recherche client -->
+<div class="modal fade" id="modalRechercheClient" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rechercher un client</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="rechercheClientInput" 
+                           placeholder="Rechercher par nom, email ou téléphone...">
+                </div>
+                <div id="resultatsClients" class="list-group">
+                    <!-- Résultats de recherche -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de recherche produit -->
+<div class="modal fade" id="modalRechercheProduit" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rechercher un produit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="rechercheProduitInput" 
+                           placeholder="Rechercher par code, désignation...">
+                </div>
+                <div id="resultatsProduits" class="list-group">
+                    <!-- Résultats de recherche -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de prévisualisation -->
+<div class="modal fade" id="modalPrevisualisation" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Prévisualisation du document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <iframe id="previewFrame" style="width: 100%; height: 500px; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let ligneIndex = {{ document.lignes|length if document and document.lignes else 0 }};
+
+$(document).ready(function() {
+    // Calculer la durée de location automatiquement
+    $('#date_debut, #date_fin').on('change', function() {
+        calculerDureeLocation();
+    });
+    
+    // Calculer les totaux initiaux
+    calculerTotaux();
+    
+    // Validation du formulaire
+    $('#documentForm').on('submit', function(e) {
+        e.preventDefault();
+        sauvegarderDocument();
+    });
+});
+
+function ajouterLigne() {
+    // Supprimer la ligne vide si elle existe
+    $('.ligne-vide').remove();
+    
+    const html = `
+        <tr data-ligne-index="${ligneIndex}">
+            <td>${ligneIndex + 1}</td>
+            <td>
+                <input type="text" class="form-control form-control-sm" 
+                       name="lignes[${ligneIndex}][code_produit]" 
+                       onchange="rechercherProduit(this)">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm" 
+                       name="lignes[${ligneIndex}][designation]" required>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm text-center" 
+                       name="lignes[${ligneIndex}][quantite]" 
+                       value="1" step="0.01" min="0" required onchange="calculerLigne(this)">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm" 
+                       name="lignes[${ligneIndex}][unite]" value="unité">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm text-end" 
+                       name="lignes[${ligneIndex}][prix_unitaire]" 
+                       value="0" step="0.01" min="0" required onchange="calculerLigne(this)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm text-center" 
+                       name="lignes[${ligneIndex}][remise_pourcentage]" 
+                       value="0" step="0.1" min="0" max="100" onchange="calculerLigne(this)">
+            </td>
+            <td class="text-end">
+                <span class="total-ligne">0.00</span> €
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="supprimerLigne(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `;
+    
+    $('#lignesContainer').append(html);
+    ligneIndex++;
+    renumeroterLignes();
+}
+
+function supprimerLigne(btn) {
+    $(btn).closest('tr').remove();
+    renumeroterLignes();
+    calculerTotaux();
+    
+    // Ajouter ligne vide si aucune ligne
+    if ($('#lignesContainer tr').length === 0) {
+        $('#lignesContainer').html(`
+            <tr class="ligne-vide">
+                <td colspan="9" class="text-center py-4">
+                    <em>Aucune ligne. Cliquez sur "Ajouter une ligne" pour commencer.</em>
+                </td>
+            </tr>
+        `);
+    }
+}
+
+function renumeroterLignes() {
+    $('#lignesContainer tr:not(.ligne-vide)').each(function(index) {
+        $(this).find('td:first').text(index + 1);
+        $(this).attr('data-ligne-index', index);
+        
+        // Mettre à jour les noms des champs
+        $(this).find('input').each(function() {
+            const name = $(this).attr('name');
+            if (name) {
+                const newName = name.replace(/lignes\[\d+\]/, `lignes[${index}]`);
+                $(this).attr('name', newName);
+            }
+        });
+    });
+}
+
+function calculerLigne(input) {
+    const row = $(input).closest('tr');
+    const quantite = parseFloat(row.find('input[name*="[quantite]"]').val()) || 0;
+    const prixUnitaire = parseFloat(row.find('input[name*="[prix_unitaire]"]').val()) || 0;
+    const remisePourcentage = parseFloat(row.find('input[name*="[remise_pourcentage]"]').val()) || 0;
+    
+    const sousTotal = quantite * prixUnitaire;
+    const montantRemise = sousTotal * (remisePourcentage / 100);
+    const total = sousTotal - montantRemise;
+    
+    row.find('.total-ligne').text(total.toFixed(2));
+    calculerTotaux();
+}
+
+function calculerTotaux() {
+    let totalHT = 0;
+    
+    // Calculer le total HT
+    $('#lignesContainer .total-ligne').each(function() {
+        totalHT += parseFloat($(this).text()) || 0;
+    });
+    
+    // Remise globale
+    const remiseGlobalePourcentage = parseFloat($('#remiseGlobale').val()) || 0;
+    const montantRemiseGlobale = totalHT * (remiseGlobalePourcentage / 100);
+    const totalApresRemise = totalHT - montantRemiseGlobale;
+    
+    // TVA
+    const tauxTVA = parseFloat($('#tauxTVA').val()) || 0;
+    const montantTVA = totalApresRemise * (tauxTVA / 100);
+    const totalTTC = totalApresRemise + montantTVA;
+    
+    // Mettre à jour l'affichage
+    $('#totalHT').text(totalHT.toFixed(2));
+    $('#montantRemise').text(montantRemiseGlobale.toFixed(2));
+    $('#totalApresRemise').text(totalApresRemise.toFixed(2));
+    $('#montantTVA').text(montantTVA.toFixed(2));
+    $('#totalTTC').text(totalTTC.toFixed(2));
+}
+
+function calculerDureeLocation() {
+    const dateDebut = $('#date_debut').val();
+    const dateFin = $('#date_fin').val();
+    
+    if (dateDebut && dateFin) {
+        const debut = new Date(dateDebut);
+        const fin = new Date(dateFin);
+        const diffTime = Math.abs(fin - debut);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        $('#duree_location').val(diffDays);
+    }
+}
+
+function rechercherClient() {
+    $('#modalRechercheClient').modal('show');
+    
+    // Focus sur le champ de recherche
+    setTimeout(() => {
+        $('#rechercheClientInput').focus();
+    }, 500);
+    
+    // Recherche en temps réel
+    $('#rechercheClientInput').on('input', function() {
+        const terme = $(this).val();
+        if (terme.length >= 2) {
+            // Appel AJAX pour rechercher les clients
+            rechercherClientsAjax(terme);
+        }
+    });
+}
+
+function rechercherClientsAjax(terme) {
+    $.ajax({
+        url: '/clients/rechercher',
+        method: 'GET',
+        data: { terme: terme },
+        success: function(clients) {
+            let html = '';
+            clients.forEach(client => {
+                html += `
+                    <div class="list-group-item list-group-item-action" onclick="selectionnerClient(${client.id}, '${client.nom}', '${client.adresse || ''}', '${client.ville || ''}', '${client.code_postal || ''}', '${client.telephone || ''}', '${client.email || ''}')">
+                        <h6 class="mb-1">${client.nom}</h6>
+                        <p class="mb-1">${client.adresse || ''} ${client.ville || ''}</p>
+                        <small>${client.telephone || ''} ${client.email || ''}</small>
+                    </div>
+                `;
+            });
+            $('#resultatsClients').html(html);
+        }
+    });
+}
+
+function selectionnerClient(id, nom, adresse, ville, codePostal, telephone, email) {
+    $('#client_id').val(id);
+    $('#client_nom').val(nom);
+    $('#client_adresse').val(adresse);
+    $('#client_ville').val(ville);
+    $('#client_code_postal').val(codePostal);
+    $('#client_telephone').val(telephone);
+    $('#client_email').val(email);
+    $('#modalRechercheClient').modal('hide');
+}
+
+function rechercherProduit(input) {
+    const code = $(input).val();
+    if (code.length >= 2) {
+        $.ajax({
+            url: '/produits/rechercher',
+            method: 'GET',
+            data: { code: code },
+            success: function(produit) {
+                if (produit) {
+                    const row = $(input).closest('tr');
+                    row.find('input[name*="[designation]"]').val(produit.designation);
+                    row.find('input[name*="[prix_unitaire]"]').val(produit.prix_vente);
+                    row.find('input[name*="[unite]"]').val(produit.unite);
+                    calculerLigne(row.find('input[name*="[quantite]"]')[0]);
+                }
+            }
+        });
+    }
+}
+
+function sauvegarderDocument() {
+    const formData = new FormData($('#documentForm')[0]);
+    
+    $.ajax({
+        url: $('#documentForm').attr('action'),
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                showAlert('success', 'Document sauvegardé avec succès !');
+                setTimeout(() => {
+                    window.location.href = '/documents/detail/' + response.document_id;
+                }, 1500);
+            } else {
+                showAlert('danger', 'Erreur lors de la sauvegarde : ' + response.message);
+            }
+        },
+        error: function() {
+            showAlert('danger', 'Erreur de communication avec le serveur.');
+        }
+    });
+}
+
+function confirmerDocument() {
+    if (confirm('Êtes-vous sûr de vouloir confirmer ce document ?')) {
+        $('#statut').val('CONFIRME');
+        sauvegarderDocument();
+    }
+}
+
+function annulerModifications() {
+    if (confirm('Êtes-vous sûr de vouloir annuler les modifications ?')) {
+        {% if document %}
+        window.location.href = '/documents/detail/{{ document.id }}';
+        {% else %}
+        window.location.href = '/documents/liste';
+        {% endif %}
+    }
+}
+
+function previsualiserDocument() {
+    const formData = new FormData($('#documentForm')[0]);
+    
+    $.ajax({
+        url: '/documents/previsualiser',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                $('#previewFrame').attr('src', response.url);
+                $('#modalPrevisualisation').modal('show');
+            } else {
+                showAlert('danger', 'Erreur lors de la prévisualisation : ' + response.message);
+            }
+        }
+    });
+}
+
+function importerModele() {
+    // À implémenter selon les besoins
+    showAlert('info', 'Fonctionnalité en cours de développement.');
+}
+
+function creerCopie() {
+    if (confirm('Créer une copie de ce document ?')) {
+        window.location.href = '/documents/dupliquer/{{ document.id if document else "" }}';
+    }
+}
+
+function showAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    $('.container-fluid').prepend(alertHtml);
+    
+    setTimeout(() => {
+        $('.alert').alert('close');
+    }, 5000);
+}
+</script>
+
+<style>
+.table input {
+    border: none;
+    background: transparent;
+    padding: 0.25rem;
+}
+
+.table input:focus {
+    background: #fff;
+    border: 1px solid #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.badge-BROUILLON { background-color: #6c757d; }
+.badge-CONFIRME { background-color: #17a2b8; }
+.badge-EN_COURS { background-color: #ffc107; color: #000; }
+.badge-TERMINE { background-color: #28a745; }
+.badge-ANNULE { background-color: #dc3545; }
+.badge-FACTURE { background-color: #007bff; }
+
+.list-group-item:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+}
+</style>
+
+<script src="{{ url_for('static', filename='js/documents.js') }}"></script>
+{% endblock %}

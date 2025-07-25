@@ -1,0 +1,506 @@
+/* =============================================== */
+/* CSS spécifique pour le module Documents        */
+/* SEILite - Gestion des documents commerciaux   */
+/* =============================================== */
+
+/* Variables CSS pour le module documents */
+:root {
+    --docs-primary: #007bff;
+    --docs-success: #28a745;
+    --docs-warning: #ffc107;
+    --docs-danger: #dc3545;
+    --docs-info: #17a2b8;
+    --docs-secondary: #6c757d;
+    
+    --docs-bg-light: #f8f9fa;
+    --docs-border-radius: 8px;
+    --docs-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    --docs-shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* En-têtes des sections documents */
+.documents-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    padding: 20px;
+    border-radius: var(--docs-border-radius);
+    margin-bottom: 20px;
+    box-shadow: var(--docs-shadow);
+}
+
+.documents-header h1, .documents-header h4 {
+    margin-bottom: 0;
+}
+
+.documents-header .badge {
+    font-size: 0.9em;
+}
+
+/* Sélecteur de module */
+.module-selector {
+    background: white;
+    padding: 15px;
+    border-radius: var(--docs-border-radius);
+    box-shadow: var(--docs-shadow);
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.module-selector .btn-group .btn {
+    border-radius: 4px;
+    margin-right: 5px;
+}
+
+.module-selector .btn-group .btn.active {
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Section de filtres */
+.filter-section {
+    background: var(--docs-bg-light);
+    padding: 15px;
+    border-radius: var(--docs-border-radius);
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.filter-section .form-control, .filter-section .form-select {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.filter-section .btn {
+    border-radius: 4px;
+}
+
+/* Tableau des documents */
+.documents-table {
+    background: white;
+    border-radius: var(--docs-border-radius);
+    overflow: hidden;
+    box-shadow: var(--docs-shadow);
+    border: 1px solid #e9ecef;
+}
+
+.documents-table .table {
+    margin-bottom: 0;
+}
+
+.documents-table .table thead th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.documents-table .table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.documents-table .table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Badges de statut */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    border: 1px solid transparent;
+}
+
+.badge-BROUILLON, .status-pending { 
+    background: #f8f9fa; 
+    color: #6c757d; 
+    border-color: #6c757d;
+}
+
+.badge-CONFIRME, .status-approved { 
+    background: #d1ecf1; 
+    color: #0c5460; 
+    border-color: #17a2b8;
+}
+
+.badge-EN_COURS, .status-warning { 
+    background: #fff3cd; 
+    color: #856404; 
+    border-color: #ffc107;
+}
+
+.badge-TERMINE, .status-success { 
+    background: #d4edda; 
+    color: #155724; 
+    border-color: #28a745;
+}
+
+.badge-ANNULE, .status-rejected { 
+    background: #f8d7da; 
+    color: #721c24; 
+    border-color: #dc3545;
+}
+
+.badge-FACTURE, .status-invoiced { 
+    background: #cce7ff; 
+    color: #004085; 
+    border-color: #007bff;
+}
+
+/* Statistiques */
+.stats-cards .card {
+    border: none;
+    border-radius: var(--docs-border-radius);
+    box-shadow: var(--docs-shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-cards .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--docs-shadow-hover);
+}
+
+.stats-cards .card-body {
+    padding: 20px;
+}
+
+.stats-cards .card .display-4 {
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+/* Formulaires de documents */
+.document-form .card {
+    border: none;
+    border-radius: var(--docs-border-radius);
+    box-shadow: var(--docs-shadow);
+    margin-bottom: 20px;
+}
+
+.document-form .card-header {
+    background: var(--docs-bg-light);
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+}
+
+.document-form .form-control, .document-form .form-select {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.document-form .form-control:focus, .document-form .form-select:focus {
+    border-color: var(--docs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Tableau des lignes de document */
+.lignes-table {
+    border: 1px solid #dee2e6;
+    border-radius: var(--docs-border-radius);
+    overflow: hidden;
+}
+
+.lignes-table .table {
+    margin-bottom: 0;
+}
+
+.lignes-table .table input {
+    border: none;
+    background: transparent;
+    padding: 0.375rem;
+    width: 100%;
+}
+
+.lignes-table .table input:focus {
+    background: #fff;
+    border: 1px solid var(--docs-primary);
+    border-radius: 4px;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.lignes-table .table .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8em;
+}
+
+/* Onglets de détail */
+.nav-tabs .nav-link {
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    font-weight: 500;
+    color: #495057;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #e9ecef #e9ecef #dee2e6;
+    background-color: var(--docs-bg-light);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--docs-primary);
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.tab-content {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 var(--docs-border-radius) var(--docs-border-radius);
+}
+
+/* Timeline pour l'historique */
+.timeline {
+    position: relative;
+    padding: 0;
+    list-style: none;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 60px;
+}
+
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: 18px;
+    top: 0;
+    bottom: -30px;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item:last-child:before {
+    display: none;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    box-shadow: var(--docs-shadow);
+}
+
+.timeline-content {
+    background: var(--docs-bg-light);
+    padding: 15px;
+    border-radius: var(--docs-border-radius);
+    border-left: 3px solid var(--docs-primary);
+    box-shadow: var(--docs-shadow);
+}
+
+.timeline-title {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #343a40;
+}
+
+.timeline-description {
+    margin: 0 0 10px 0;
+    color: #6c757d;
+    line-height: 1.4;
+}
+
+/* Modals personnalisées */
+.modal-content {
+    border-radius: var(--docs-border-radius);
+    box-shadow: var(--docs-shadow-hover);
+}
+
+.modal-header {
+    background: var(--docs-bg-light);
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    background: var(--docs-bg-light);
+    border-top: 1px solid #dee2e6;
+}
+
+/* Recherche de clients/produits */
+.list-group-item {
+    border: 1px solid #dee2e6;
+    transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+    background-color: var(--docs-bg-light);
+    cursor: pointer;
+}
+
+.list-group-item.active {
+    background-color: var(--docs-primary);
+    border-color: var(--docs-primary);
+}
+
+/* Alertes personnalisées */
+.alert {
+    border-radius: var(--docs-border-radius);
+    border: none;
+    box-shadow: var(--docs-shadow);
+}
+
+.alert-dismissible .btn-close {
+    padding: 0.75rem;
+}
+
+/* Buttons personnalisés */
+.btn {
+    border-radius: 4px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--docs-shadow);
+}
+
+.btn-group .btn {
+    border-radius: 4px;
+    margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+/* Pagination personnalisée */
+.pagination .page-link {
+    border-radius: 4px;
+    margin: 0 2px;
+    border: 1px solid #dee2e6;
+    color: var(--docs-primary);
+}
+
+.pagination .page-link:hover {
+    background-color: var(--docs-bg-light);
+    border-color: #adb5bd;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--docs-primary);
+    border-color: var(--docs-primary);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .documents-header {
+        padding: 15px;
+        text-align: center;
+    }
+    
+    .module-selector {
+        padding: 10px;
+    }
+    
+    .filter-section {
+        padding: 10px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-group .btn {
+        margin-right: 0;
+        margin-bottom: 5px;
+        border-radius: 4px;
+    }
+    
+    .timeline-item {
+        padding-left: 40px;
+    }
+    
+    .timeline-marker {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.slide-in {
+    animation: slideIn 0.4s ease-out;
+}
+
+/* Utilitaires */
+.text-module-pi { color: #17a2b8; }
+.text-module-wo { color: #fd7e14; }
+.text-module-lo { color: #20c997; }
+.text-module-ve { color: #6f42c1; }
+
+.bg-module-pi { background-color: #17a2b8; }
+.bg-module-wo { background-color: #fd7e14; }
+.bg-module-lo { background-color: #20c997; }
+.bg-module-ve { background-color: #6f42c1; }
+
+.border-module-pi { border-color: #17a2b8; }
+.border-module-wo { border-color: #fd7e14; }
+.border-module-lo { border-color: #20c997; }
+.border-module-ve { border-color: #6f42c1; }
+
+/* États de chargement */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Print styles */
+@media print {
+    .documents-header,
+    .filter-section,
+    .btn,
+    .nav-tabs,
+    .pagination {
+        display: none !important;
+    }
+    
+    .documents-table {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.25rem !important;
+        border: 1px solid #000 !important;
+    }
+}

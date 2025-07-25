@@ -1,0 +1,266 @@
+<!-- =============================================== -->
+<!-- Navbar Unifiée - SEI Lite                      -->
+<!-- =============================================== -->
+<!-- Navigation principale avec thème cohérent      -->
+<!-- Gestion automatique des éléments actifs        -->
+<!-- Support responsive et dropdowns                 -->
+<!-- =============================================== -->
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-gradient-dark shadow-sm">
+    <div class="container-fluid">
+        <!-- Brand avec logo -->
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('liste_produits') }}">
+            <div class="brand-logo me-2">
+                <i class="fas fa-industry fa-lg text-warning"></i>
+            </div>
+            <div class="brand-text">
+                <span class="fw-bold">SEI</span>
+                <small class="text-muted d-block lh-1">Lite</small>
+            </div>
+        </a>
+
+        <!-- Toggle button pour mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" 
+                aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Menu principal -->
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <!-- Navigation principale -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <!-- Produits -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint and 'produit' in request.endpoint }}" 
+                       href="#" id="navProduits" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-box"></i> Produits
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navProduits">
+                        <li><a class="dropdown-item" href="{{ url_for('liste_produits') }}">
+                            <i class="fas fa-list"></i> Liste des produits
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('nouveau_produit') }}">
+                            <i class="fas fa-plus"></i> Nouveau produit
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="alert('À venir')">
+                            <i class="fas fa-chart-bar"></i> Rapports produits
+                        </a></li>
+                    </ul>
+                </li>
+
+                <!-- Clients -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint and 'clients' in request.endpoint }}" 
+                       href="#" id="navClients" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-users"></i> Clients
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navClients">
+                        <li><a class="dropdown-item" href="{{ url_for('clients.liste_clients') }}">
+                            <i class="fas fa-list"></i> Liste des clients
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('clients.nouveau_client') }}">
+                            <i class="fas fa-user-plus"></i> Nouveau client
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('clients.stats_clients') }}">
+                            <i class="fas fa-chart-pie"></i> Statistiques clients
+                        </a></li>
+                    </ul>
+                </li>
+
+                <!-- Véhicules -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint and 'vehicules' in request.endpoint }}" 
+                       href="#" id="navVehicules" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-car"></i> Véhicules
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navVehicules">
+                        <li><a class="dropdown-item" href="{{ url_for('vehicules.liste_vehicules') }}">
+                            <i class="fas fa-list"></i> Liste des véhicules
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('vehicules.nouveau_vehicule') }}">
+                            <i class="fas fa-plus"></i> Nouveau véhicule
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="alert('À venir')">
+                            <i class="fas fa-wrench"></i> Entretiens
+                        </a></li>
+                    </ul>
+                </li>
+
+                <!-- Documents commerciaux -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {{ 'active' if request.endpoint and 'documents' in request.endpoint }}" 
+                       href="#" id="navDocuments" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-file-alt"></i> Documents
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navDocuments">
+                        <li><h6 class="dropdown-header">Gestion commerciale</h6></li>
+                        <li><a class="dropdown-item" href="{{ url_for('documents.liste') }}">
+                            <i class="fas fa-list"></i> Tous les documents
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Nouveau document</h6></li>
+                        <li><a class="dropdown-item" href="{{ url_for('documents.nouveau', module='PI', type_document='SOU') }}">
+                            <i class="fas fa-cog"></i> Soumission pièces
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('documents.nouveau', module='WO', type_document='SOU') }}">
+                            <i class="fas fa-tools"></i> Soumission travail
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('documents.nouveau', module='LO', type_document='SOU') }}">
+                            <i class="fas fa-calendar-alt"></i> Soumission location
+                        </a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('documents.nouveau', module='VE', type_document='SOU') }}">
+                            <i class="fas fa-handshake"></i> Soumission vente
+                        </a></li>
+                    </ul>
+                </li>
+
+                <!-- Modules futurs -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle text-muted" href="#" id="navModules" 
+                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-h"></i> Plus
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navModules">
+                        <li><h6 class="dropdown-header">Modules à venir</h6></li>
+                        <li><a class="dropdown-item disabled" href="#">
+                            <i class="fas fa-warehouse"></i> Inventaire
+                        </a></li>
+                        <li><a class="dropdown-item disabled" href="#">
+                            <i class="fas fa-chart-line"></i> Rapports
+                        </a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <!-- Recherche globale -->
+            <form class="d-flex me-3" role="search" id="searchGlobal">
+                <div class="input-group">
+                    <input class="form-control form-control-sm" type="search" placeholder="Recherche globale..." 
+                           aria-label="Search" id="globalSearchInput">
+                    <button class="btn btn-outline-light btn-sm" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Menu utilisateur -->
+            <div class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navUser" role="button" 
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle"></i> Utilisateur
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navUser">
+                        <li><h6 class="dropdown-header">Mon compte</h6></li>
+                        <li><a class="dropdown-item" href="#" onclick="alert('Profil à venir')">
+                            <i class="fas fa-user"></i> Profil
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="alert('Paramètres à venir')">
+                            <i class="fas fa-cog"></i> Paramètres
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="alert('Aide à venir')">
+                            <i class="fas fa-question-circle"></i> Aide
+                        </a></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="alert('Déconnexion à venir')">
+                            <i class="fas fa-sign-out-alt"></i> Déconnexion
+                        </a></li>
+                    </ul>
+                </li>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Breadcrumb contextuel -->
+<nav aria-label="breadcrumb" class="bg-light border-bottom">
+    <div class="container-fluid">
+        <ol class="breadcrumb mb-0 py-2">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('liste_produits') }}" class="text-decoration-none">
+                    <i class="fas fa-home"></i> Accueil
+                </a>
+            </li>
+            {% block breadcrumb %}
+            <!-- Les pages peuvent ajouter leur breadcrumb ici -->
+            {% endblock %}
+        </ol>
+    </div>
+</nav>
+
+<style>
+/* Styles pour la navbar unifiée */
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #212529 0%, #343a40 100%);
+}
+
+.brand-logo {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 8px;
+}
+
+.navbar-nav .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.navbar-nav .dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.navbar-nav .dropdown-item:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+#globalSearchInput {
+    min-width: 200px;
+}
+
+@media (max-width: 768px) {
+    #globalSearchInput {
+        min-width: 150px;
+    }
+    
+    .brand-text small {
+        display: none;
+    }
+}
+</style>
+
+<script>
+// Recherche globale
+document.getElementById('searchGlobal').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const query = document.getElementById('globalSearchInput').value.trim();
+    if (query) {
+        // Rediriger vers la page de recherche appropriée selon le contexte
+        if (window.location.pathname.includes('/clients')) {
+            window.location.href = `/clients?search=${encodeURIComponent(query)}`;
+        } else if (window.location.pathname.includes('/vehicules')) {
+            window.location.href = `/vehicules?search=${encodeURIComponent(query)}`;
+        } else {
+            window.location.href = `/produits?search=${encodeURIComponent(query)}`;
+        }
+    }
+});
+
+// Auto-complétion pour la recherche globale (optionnel)
+document.getElementById('globalSearchInput').addEventListener('input', function() {
+    const query = this.value.trim();
+    if (query.length >= 2) {
+        // Ici on peut ajouter de l'auto-complétion
+        console.log('Recherche:', query);
+    }
+});
+</script>

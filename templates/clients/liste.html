@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+
+{% block title %}Liste des Clients{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-users"></i> Gestion des Clients</h1>
+    <div class="btn-group">
+        <a href="{{ url_for('clients.nouveau_client') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nouveau Client
+        </a>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNouveauClient">
+            <i class="fas fa-plus-circle"></i> Nouveau (Modal)
+        </button>
+        <a href="{{ url_for('liste_produits') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-box"></i> Produits
+        </a>
+        <a href="{{ url_for('vehicules.liste_vehicules') }}" class="btn btn-outline-info">
+            <i class="fas fa-car"></i> Véhicules
+        </a>
+    </div>
+</div>
+
+<!-- Barre de recherche et filtres -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Recherche</label>
+                <input type="text" name="search" class="form-control" 
+                       value="{{ search }}" placeholder="Nom, code, téléphone, email...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Statut</label>
+                <select name="actif" class="form-select">
+                    <option value="">Tous</option>
+                    <option value="true" {{ 'selected' if actif == 'true' }}>Actifs</option>
+                    <option value="false" {{ 'selected' if actif == 'false' }}>Inactifs</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Type</label>
+                <select name="type" class="form-select">
+                    <option value="">Tous</option>
+                    {% for type_opt in types %}
+                    <option value="{{ type_opt }}" {{ 'selected' if type_client == type_opt }}>{{ type_opt }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Vendeur</label>
+                <select name="vendeur" class="form-select">
+                    <option value="">Tous</option>
+                    {% for vendeur_opt in vendeurs %}
+                    <option value="{{ vendeur_opt }}" {{ 'selected' if vendeur == vendeur_opt }}>{{ vendeur_opt }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Province</label>
+                <select name="prov" class="form-select">
+                    <option value="">Toutes</option>
+                    {% for prov_opt in provinces %}
+                    <option value="{{ prov_opt }}" {{ 'selected' if prov == prov_opt }}>{{ prov_opt }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-search"></i>
+                </button>
+                <a href="{{ url_for('clients.liste_clients') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.total or 0 }}</h4>
+                <small>Total clients</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.actifs or 0 }}</h4>
+                <small>Actifs</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.inactifs or 0 }}</h4>
+                <small>Inactifs</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.entreprises or 0 }}</h4>
+                <small>Entreprises</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h4>{{ stats.particuliers or 0 }}</h4>
+                <small>Particuliers</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation de pagination -->
+{% if clients.pages > 1 %}
+<nav aria-label="Navigation des pages">
+    <ul class="pagination justify-content-center mb-4">
+        {% if clients.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('clients.liste_clients', page=1, search=search, actif=actif, type=type_client, vendeur=vendeur, prov=prov) }}">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('clients.liste_clients', page=clients.prev_num, search=search, actif=actif, type=type_client, vendeur=vendeur, prov=prov) }}">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            </li>
+        {% endif %}
+        
+        <li class="page-item active">
+            <span class="page-link">{{ clients.page }} de {{ clients.pages }}</span>
+        </li>
+        
+        {% if clients.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('clients.liste_clients', page=clients.next_num, search=search, actif=actif, type=type_client, vendeur=vendeur, prov=prov) }}">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('clients.liste_clients', page=clients.pages, search=search, actif=actif, type=type_client, vendeur=vendeur, prov=prov) }}">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Tableau des clients -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i> Liste des Clients
+            <small class="text-muted">({{ clients.total }} clients)</small>
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th width="10%">Code</th>
+                        <th width="15%">Nom</th>
+                        <th width="15%">Entreprise</th>
+                        <th width="12%">Ville</th>
+                        <th width="10%">Téléphone</th>
+                        <th width="10%">Vendeur</th>
+                        <th width="8%">Statut</th>
+                        <th width="8%">Fidélité</th>
+                        <th width="12%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients.items %}
+                    <tr>
+                        <td class="fw-bold">{{ client.client }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ client.nom or '-' }}</div>
+                            <small class="text-muted">{{ client.prenom or '' }}</small>
+                        </td>
+                        <td>
+                            <div>{{ client.compagny or '-' }}</div>
+                            {% if client.contact %}
+                                <small class="text-muted">Contact: {{ client.contact }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>{{ client.ville or '-' }}</div>
+                            {% if client.prov %}
+                                <small class="text-muted">{{ client.prov }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if client.tphone %}
+                                <a href="tel:{{ client.tphone }}" class="text-decoration-none">
+                                    <i class="fas fa-phone text-success"></i> {{ client.tphone }}
+                                </a>
+                            {% else %}
+                                -
+                            {% endif %}
+                            {% if client.telcel %}
+                                <br><small class="text-muted">
+                                    <i class="fas fa-mobile-alt"></i> {{ client.telcel }}
+                                </small>
+                            {% endif %}
+                        </td>
+                        <td>{{ client.vendeur or '-' }}</td>
+                        <td>
+                            {% if client.actif and not client.arret %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle"></i> Actif
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle"></i> Inactif
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if client.loyalid %}
+                                <span class="badge bg-warning text-dark" title="ID Fidélité: {{ client.loyalid }}">
+                                    <i class="fas fa-star"></i> {{ client.loyalid }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('clients.detail_client', id=client.id) }}" 
+                                   class="btn btn-sm btn-outline-info" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('clients.modifier_client', id=client.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if client.email %}
+                                <a href="mailto:{{ client.email }}" 
+                                   class="btn btn-sm btn-outline-secondary" title="Email">
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline-success" 
+                                        title="Dupliquer" onclick="dupliquerClient({{ client.id }})">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                {% if client.actif %}
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        title="Désactiver" onclick="confirmerDesactivation({{ client.id }}, '{{ client.client }}')">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <p>Aucun client trouvé</p>
+                            {% if search or actif or type_client or vendeur or prov %}
+                                <a href="{{ url_for('clients.liste_clients') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-list"></i> Voir tous les clients
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de désactivation -->
+<div class="modal fade" id="modalDesactivation" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la désactivation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir désactiver le client <strong id="clientCode"></strong> ?</p>
+                <p class="text-warning"><i class="fas fa-exclamation-triangle"></i> Le client sera archivé mais pourra être réactivé plus tard.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="POST" id="formDesactivation" style="display: inline;">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-ban"></i> Désactiver
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmerDesactivation(id, code) {
+    document.getElementById('clientCode').textContent = code;
+    document.getElementById('formDesactivation').action = `/clients/${id}/desactiver`;
+    new bootstrap.Modal(document.getElementById('modalDesactivation')).show();
+}
+
+function dupliquerClient(id) {
+    if (confirm('Voulez-vous créer une copie de ce client ?')) {
+        window.location.href = `/clients/${id}/dupliquer`;
+    }
+}
+
+// Auto-refresh toutes les 10 minutes
+setTimeout(function() {
+    location.reload();
+}, 600000);
+</script>
+
+<!-- Inclusion du modal de création -->
+{% include 'clients/modal_nouveau_client.html' %}
+
+{% endblock %}

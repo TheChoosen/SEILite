@@ -1,0 +1,795 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if produit %}Modifier {{ produit.numero_produit }}{% else %}Nouveau Produit{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-{{ 'edit' if produit else 'plus' }}"></i>
+        {% if produit %}Modifier le Produit - {{ produit.numero_produit }}{% else %}Nouveau Produit{% endif %}
+    </h1>
+    <div>
+        <a href="{{ url_for('liste_produits') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+        {% if produit %}
+        <a href="{{ url_for('voir_produit', id=produit.id) }}" class="btn btn-outline-info">
+            <i class="fas fa-eye"></i> Voir
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    {% if produit %}
+    <input type="hidden" name="id" value="{{ produit.id }}">
+    {% endif %}
+    <!-- Informations générales -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-info-circle"></i> Informations Générales</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">N° de produit *</label>
+                    <input type="text" name="numero_produit" class="form-control bg-warning bg-opacity-25"
+                        value="{{ produit.produit_id if produit else '' }}" {% if produit %}readonly{% endif %} required
+                        maxlength="30">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Substitut</label>
+                    <input type="text" name="substitut" class="form-control bg-warning bg-opacity-25"
+                        value="{{ produit.substitut if produit else '' }}" maxlength="30">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Code-barres</label>
+                    <input type="text" name="barcode" class="form-control bg-warning bg-opacity-25"
+                        value="{{ produit.barcode if produit else '' }}" maxlength="60">
+                </div>
+                <div class="col-md-2">
+                    {% if produit and produit.image_path %}
+                    <img src="{{ url_for('static', filename='uploads/' + produit.image_path) }}" class="img-thumbnail"
+                        style="max-width: 100px;" alt="Image produit">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description du produit -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-align-left"></i> Description du Produit</h5>
+        </div>
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Français</label>
+                        <input type="text" name="description_fr" class="form-control"
+                            value="{{ produit.description_fr if produit else '' }}" maxlength="60">
+                    </div>
+
+
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Anglais</label>
+                        <input type="text" name="description_en" class="form-control"
+                            value="{{ produit.description_en if produit else '' }}" maxlength="60">
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row">
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Mot-clé 1</label>
+                        <input type="text" name="motclef1" class="form-control"
+                            value="{{ produit.motclef1 if produit else '' }}" maxlength="30">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Mot-clé 2</label>
+                        <input type="text" name="motclef2" class="form-control"
+                            value="{{ produit.motclef2 if produit else '' }}" maxlength="30">
+                    </div>
+
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Remarque 1</label>
+                    <input type="text" name="remarques1" class="form-control"
+                        value="{{ produit.remarques1 if produit else '' }}" maxlength="60">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Remarque 2</label>
+                    <input type="text" name="remarques2" class="form-control"
+                        value="{{ produit.remarques2 if produit else '' }}" maxlength="60">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Caractéristiques synchronisées Apogee/MySQL -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5><i class="fas fa-link"></i> Caractéristiques synchronisées Apogee ↔ MySQL</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Groupe</label>
+                        <div class="input-group">
+                             <button type="button" class="btn btn-outline-primary" data-tooltip="Saisir les postes comptables & taxes"
+                        onclick="ouvrirModalPostesComptables()">
+                        <i class="fas fa-calculator"></i> 
+                    </button>
+                            <input type="text" name="groupe" id="inputGroupe"
+                                class="form-control bg-warning bg-opacity-25"
+                                value="{{ produit.groupe if produit else '' }}" maxlength="15">
+                            <button type="button" class="btn btn-outline-secondary" title="Rechercher un groupe"
+                                onclick="ouvrirModalRechercheType('groupe', 'inputGroupe', 'inprix', 'TYPE')">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Famille</label>
+                        <div class="input-group">
+                            <input type="text" name="famille" id="inputFamille"
+                                class="form-control bg-warning bg-opacity-25"
+                                value="{{ produit.famille if produit else '' }}">
+                            <button type="button" class="btn btn-outline-secondary" title="Rechercher une famille"
+                                onclick="ouvrirModalRechercheType('famille', 'inputFamille', 'inprix', 'FORMAT')">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <div class="input-group">
+                            <input type="text" name="type_produit" id="inputType"
+                                class="form-control bg-warning bg-opacity-25"
+                                value="{{ produit.type_produit if produit else '' }}" maxlength="15">
+                            <button type="button" class="btn btn-outline-secondary" title="Rechercher un type"
+                                onclick="ouvrirModalRechercheType('type', 'inputType', 'inprix', 'TYPEP')">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie</label>
+                        <div class="input-group">
+                      
+                            <input type="text" name="categorie" id="inputCategorie"
+                                class="form-control bg-warning bg-opacity-25"
+                                value="{{ produit.categorie if produit else '' }}" maxlength="15">
+                            <button type="button" class="btn btn-outline-secondary" title="Rechercher une catégorie"
+                                onclick="ouvrirModalRechercheType('categorie', 'inputCategorie', 'inprix', 'CATP')">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Postes comptables et taxes (modale) -->
+            <div class="row">
+                 
+                    <!-- Bloc source caché pour injection dans la modale -->
+                    <div id="blocPostesComptablesSource" style="display:none">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6><i class="fas fa-calculator"></i> Postes Comptables</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <label class="form-label">Vente</label>
+                                    <div class="col-6">
+                                        <input type="text" name="poste_vente_can"
+                                            class="form-control bg-warning bg-opacity-25"
+                                            value="{{ produit.poste_vente_can if produit else '' }}" maxlength="2"
+                                            placeholder="CAN">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" name="poste_vente_us"
+                                            class="form-control bg-warning bg-opacity-25"
+                                            value="{{ produit.poste_vente_us if produit else '' }}" maxlength="2"
+                                            placeholder="US">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <label class="form-label">Achats</label>
+                                    <div class="col-6">
+                                        <input type="text" name="poste_achat_can"
+                                            class="form-control bg-warning bg-opacity-25"
+                                            value="{{ produit.poste_achat_can if produit else '' }}" maxlength="2"
+                                            placeholder="CAN">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" name="poste_achat_us"
+                                            class="form-control bg-warning bg-opacity-25"
+                                            value="{{ produit.poste_achat_us if produit else '' }}" maxlength="2"
+                                            placeholder="US">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h6><i class="fas fa-percentage"></i> Taxes</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">T.V.P</label>
+                                    <select name="tvp" class="form-select">
+                                        <option value="O" {{ 'selected' if (produit and produit.tvp=='O' ) or not
+                                            produit else '' }}>Oui</option>
+                                        <option value="N" {{ 'selected' if (produit and produit.tvp=='N' ) else '' }}>
+                                            Non</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">T.V.F</label>
+                                    <div class="input-group">
+                                        <select name="tvf" class="form-select">
+                                            <option value="O" {{ 'selected' if (produit and produit.tvf=='O' ) or not
+                                                produit else '' }}>Oui</option>
+                                            <option value="N" {{ 'selected' if (produit and produit.tvf=='N' ) else ''
+                                                }}>Non</option>
+                                        </select>
+                                        <span class="input-group-text">%</span>
+                                        <input type="text" name="taux_taxe_fed"
+                                            class="form-control bg-warning bg-opacity-25"
+                                            value="{{ produit.taux_taxe_fed if produit else '' }}" maxlength="1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% include "recherche/modal_postes_comptables.html" %}
+            </div>
+            <div class="row">
+
+                <div class="col-md-4">
+                    <label class="form-label">Lien catégorie (liencate)</label>
+                    <input type="text" name="liencate" class="form-control"
+                        value="{{ produit.liencate if produit else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Lien caractéristique produit (liencpro)</label>
+                    <input type="text" name="liencpro" class="form-control"
+                        value="{{ produit.liencpro if produit else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Type de caractéristique (type)</label>
+                    <input type="text" name="type" class="form-control" value="{{ produit.type if produit else '' }}">
+                </div>
+            </div>
+            <small class="text-muted">Synchronisation automatique avec Apogee et MySQL.</small>
+        </div>
+    </div>
+
+    {# Inclusion de la modale de recherche générique retirée (désormais globale dans base.html) #}
+
+    <div class="row">
+        <!-- Gestion -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-cogs"></i> Gestion</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Kit / Prem.</label>
+                        <select name="inventorie" class="form-select">
+                            <option value="O" {{ 'selected' if (produit and produit.inventorie=='O' ) else '' }}>Oui
+                            </option>
+                            <option value="N" {{ 'selected' if (produit and produit.inventorie=='N' ) else '' }}>Non
+                            </option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Inventorié</label>
+                        <select name="inventorie" class="form-select">
+                            <option value="O" {{ 'selected' if (produit and produit.inventorie=='O' ) else '' }}>Oui
+                            </option>
+                            <option value="N" {{ 'selected' if (produit and produit.inventorie=='N' ) else '' }}>Non
+                            </option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Actif</label>
+                        <select name="actif" class="form-select">
+                            <option value="O" {{ 'selected' if (produit and produit.actif=='O' ) or not produit else ''
+                                }}>Oui</option>
+                            <option value="N" {{ 'selected' if (produit and produit.actif=='N' ) else '' }}>Non</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Discontinué</label>
+                        <select name="discontinue" class="form-select">
+                            <option value="N" {{ 'selected' if not produit or produit.discontinue=='N' else '' }}>Non
+                            </option>
+                            <option value="O" {{ 'selected' if (produit and produit.discontinue=='O' ) else '' }}>Oui
+                            </option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Étiquettes</label>
+                        <select name="etiquettes" class="form-select">
+                            <option value="O" {{ 'selected' if (produit and produit.etiquettes=='O' ) or not produit
+                                else '' }}>Oui</option>
+                            <option value="N" {{ 'selected' if (produit and produit.etiquettes=='N' ) else '' }}>Non
+                            </option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Escomptable</label>
+                        <select name="escomptable" class="form-select">
+                            <option value="O" {{ 'selected' if (produit and produit.escomptable=='O' ) or not produit
+                                else '' }}>Oui</option>
+                            <option value="N" {{ 'selected' if (produit and produit.escomptable=='N' ) else '' }}>Non
+                            </option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">N° série</label>
+                            <select name="gestion_serie" class="form-select">
+                                <option value="N" {{ 'selected' if not produit or produit.gestion_serie=='N' else '' }}>
+                                    Non</option>
+                                <option value="O" {{ 'selected' if (produit and produit.gestion_serie=='O' ) else '' }}>
+                                    Oui</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">N° lot</label>
+                            <select name="gestion_lot" class="form-select">
+                                <option value="N" {{ 'selected' if not produit or produit.gestion_lot=='N' else '' }}>
+                                    Non</option>
+                                <option value="O" {{ 'selected' if (produit and produit.gestion_lot=='O' ) else '' }}>
+                                    Oui</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Localisation et coûts -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-map-marker-alt"></i> Localisation</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Localisation</label>
+                        <input type="text" name="localisation" class="form-control"
+                            value="{{ produit.localisation if produit else '' }}" maxlength="10">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Format</label>
+                        <input type="text" name="famille" class="form-control"
+                            value="{{ produit.famille if produit else '' }}" maxlength="25">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Évaluation</label>
+                        <input type="text" name="evaluation" class="form-control"
+                            value="{{ produit.evaluation if produit else '' }}" maxlength="10">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-dollar-sign"></i> Coûts</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Coût référence</label>
+                        <input type="number" step="0.01" name="cout_reference" class="form-control"
+                            value="{{ produit.cout_reference if produit else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Coût T.V.F</label>
+                        <input type="number" step="0.01" name="cout_tvf" class="form-control"
+                            value="{{ produit.cout_tvf if produit else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prix de revient</label>
+                        <input type="number" step="0.01" name="prix_revient" class="form-control"
+                            value="{{ produit.prix_revient if produit else '' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gestion des stocks -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-boxes"></i> Gestion des Stocks</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Point de commande</label>
+                    <input type="number" step="0.01" name="point_commande" class="form-control"
+                        value="{{ produit.point_commande if produit else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Minimum à commander</label>
+                    <input type="number" step="0.01" name="minimum_commander" class="form-control"
+                        value="{{ produit.minimum_commander if produit else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Maximum en inventaire</label>
+                    <input type="number" step="0.01" name="maximum_inventaire" class="form-control"
+                        value="{{ produit.maximum_inventaire if produit else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Calcul</label>
+                            <input type="text" name="mode_calcul" class="form-control"
+                                value="{{ produit.mode_calcul if produit else '' }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Formule</label>
+                            <input type="text" name="formule" class="form-control bg-warning bg-opacity-25"
+                                value="{{ produit.formule if produit else '' }}" maxlength="2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <label class="form-label">MAJ Auto</label>
+                    <select name="maj_auto" class="form-select">
+                        <option value="N" {{ 'selected' if not produit or produit.maj_auto=='N' else '' }}>Non</option>
+                        <option value="O" {{ 'selected' if (produit and produit.maj_auto=='O' ) else '' }}>Oui</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Noyau/Redevance -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-link"></i> Noyau/Redevance</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-1">
+                    <label class="form-label">G</label>
+                    <input type="text" name="g_core" class="form-control"
+                        value="{{ produit.g_core if produit else '' }}" maxlength="1">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">N° de produit noyau / redev.</label>
+                    <input type="text" name="produit_core" class="form-control bg-warning bg-opacity-25"
+                        value="{{ produit.produit_core if produit else '' }}" maxlength="30">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Groupe</label>
+                    <input type="text" name="groupe_core" class="form-control"
+                        value="{{ produit.groupe_core if produit else '' }}" maxlength="15">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Valeur</label>
+                    <input type="number" step="0.01" name="core_valeur" class="form-control"
+                        value="{{ produit.core_valeur if produit else '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Escalade</label>
+                    <input type="number" step="0.01" name="core_escalade" class="form-control"
+                        value="{{ produit.core_escalade if produit else '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Marge</label>
+                    <input type="number" step="0.01" name="marge" class="form-control text-bg-info"
+                        value="{{ produit.marge if produit else '' }}" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Quantités par entrepôt (INVEN) -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5><i class="fas fa-warehouse"></i> Quantités par Entrepôt</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead>
+                        <tr>
+                            <th>Entrepôt</th>
+                            <th>En main</th>
+                            <th>Commandé</th>
+                            <th>Disponible</th>
+                            <th>Attendue</th>
+                            <th>Date attendue</th>
+                            <th>Localisation</th>
+                            <th>Mouvements</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in quantites %}
+                        <tr>
+                            <td><input type="text" name="entrepot_{{ loop.index }}" class="form-control"
+                                    value="{{ q.entrepot }}"></td>
+                            <td><input type="number" step="0.01" name="qmain_{{ loop.index }}" class="form-control"
+                                    value="{{ q.qmain }}"></td>
+                            <td><input type="number" step="0.01" name="qcom_{{ loop.index }}" class="form-control"
+                                    value="{{ q.qcom }}"></td>
+                            <td><input type="number" step="0.01" name="qdispo_{{ loop.index }}" class="form-control"
+                                    value="{{ (q.qmain|float or 0) - (q.qcom|float or 0) - (q.qnf|float or 0) }}"></td>
+                            <td><input type="number" step="0.01" name="encom_{{ loop.index }}" class="form-control"
+                                    value="{{ q.encom }}"></td>
+                            <td><input type="date" name="dta_{{ loop.index }}" class="form-control" value="{{ q.dta }}">
+                            </td>
+                            <td><input type="text" name="locat_{{ loop.index }}" class="form-control"
+                                    value="{{ q.locat }}"></td>
+                            <td><input type="text" name="mouvements_{{ loop.index }}" class="form-control"
+                                    value="{{ q.mouvements }}"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-outline-primary">Ajouter un entrepôt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fiche technique (INPTECK) -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h5><i class="fas fa-file-alt"></i> Fiche technique (INPTECK)</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Description technique (français)</h6>
+                    {% for i in range(1, 11) %}
+                    <div class="mb-2">
+                        <label class="form-label">FICHE{{ i }}</label>
+                        <textarea name="fiche{{ i }}" class="form-control"
+                            rows="2">{{ attribute(inpteck, 'fiche' ~ i) if inpteck else '' }}</textarea>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="col-md-6">
+                    <h6>Description technique (anglais)</h6>
+                    {% for i in range(1, 11) %}
+                    <div class="mb-2">
+                        <label class="form-label">FICHE{{ i }}A</label>
+                        <textarea name="fiche{{ i }}a" class="form-control"
+                            rows="2">{{ attribute(inpteck, 'fiche' ~ i ~ 'a') if inpteck else '' }}</textarea>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attributs web du produit (PRODUITWEB) -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5><i class="fas fa-globe"></i> Attributs web du produit</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Ligne</label>
+                    <input type="text" name="ligne" class="form-control"
+                        value="{{ produitweb.ligne if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Couleur</label>
+                    <input type="text" name="couleur" class="form-control"
+                        value="{{ produitweb.couleur if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Grandeur</label>
+                    <input type="text" name="grandeur" class="form-control"
+                        value="{{ produitweb.grandeur if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Dimensions</label>
+                    <input type="text" name="dimensions" class="form-control"
+                        value="{{ produitweb.dimensions if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Marque</label>
+                    <input type="text" name="marque" class="form-control"
+                        value="{{ produitweb.marque if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Modèle</label>
+                    <input type="text" name="modele" class="form-control"
+                        value="{{ produitweb.modele if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Groupe</label>
+                    <input type="text" name="groupe_web" class="form-control"
+                        value="{{ produitweb.groupe if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Famille</label>
+                    <input type="text" name="famille_web" class="form-control"
+                        value="{{ produitweb.famille if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Année</label>
+                    <input type="text" name="annee" class="form-control"
+                        value="{{ produitweb.annee if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Lien photo</label>
+                    <input type="text" name="lien_photo" class="form-control"
+                        value="{{ produitweb.lien_photo if produitweb else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Statut web</label>
+                    <input type="text" name="statut_web" class="form-control"
+                        value="{{ produitweb.statut_web if produitweb else '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-image"></i> Image du produit</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Sélectionner une image</label>
+                    <input type="file" name="image" class="form-control" accept="image/*">
+                </div>
+                <div class="col-md-6">
+                    {% if produit and produit.image_path %}
+                    <label class="form-label">Image actuelle</label>
+                    <div>
+                        <img src="{{ url_for('static', filename='uploads/' + produit.image_path) }}"
+                            class="img-thumbnail" style="max-width: 200px;" alt="Image produit actuelle">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations système -->
+    {% if produit %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-info"></i> Informations Système</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Créé le</label>
+                    <input type="text" class="form-control text-bg-info"
+                        value="{{ produit.date_creation.strftime('%d/%m/%Y %H:%M') if produit.date_creation else '' }}"
+                        readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Modifié le</label>
+                    <input type="text" class="form-control text-bg-info"
+                        value="{{ produit.date_modification.strftime('%d/%m/%Y %H:%M') if produit.date_modification else '' }}"
+                        readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Boutons d'action -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> {{ 'Modifier' if produit else 'Créer' }} le produit
+                    </button>
+                    <a href="{{ url_for('liste_produits') }}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+                <div>
+                    {% if produit %}
+                    <button type="button" class="btn btn-danger" onclick="confirmerSuppression()">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% if produit %}
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="modalSuppression" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer le produit <strong>{{ produit.numero_produit }}</strong> ?</p>
+                <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="POST" action="{{ url_for('supprimer_produit', id=produit.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    {% if produit %}
+    function confirmerSuppression() {
+        new bootstrap.Modal(document.getElementById('modalSuppression')).show();
+    }
+    {% endif %}
+
+    // Fonction pour calculer automatiquement des champs
+    document.addEventListener('DOMContentLoaded', function () {
+        // Auto-uppercase pour certains champs
+        const upperCaseFields = document.querySelectorAll('input[maxlength]');
+        upperCaseFields.forEach(field => {
+            if (field.classList.contains('bg-warning')) {
+                field.addEventListener('input', function () {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+        });
+    });
+
+    // Intégration JS pour la modale de recherche générique
+    function ouvrirModalRechercheType(type, targetInputId, callback) {
+        // Si la fonction existe dans le scope de la modale, on la délègue
+        if (window.ouvrirModalRechercheType) {
+            window.ouvrirModalRechercheType(type, targetInputId, callback);
+        }
+    }
+</script>
+{% endblock %}

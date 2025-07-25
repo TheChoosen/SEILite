@@ -1,0 +1,42 @@
+<!-- Modale pour la saisie des postes comptables et taxes -->
+<div class="modal fade" id="modalPostesComptables" tabindex="-1" aria-labelledby="modalPostesComptablesLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalPostesComptablesLabel">
+          <i class="fas fa-calculator"></i> Postes Comptables & Taxes
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <div id="modalPostesComptablesBody">
+          <!-- Le contenu du formulaire sera injecté ici par JS -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="button" class="btn btn-primary" id="btnValiderPostesComptables">Valider</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// JS pour gérer la modale de postes comptables et taxes
+function ouvrirModalPostesComptables() {
+  // Récupère le HTML du bloc à éditer
+  const bloc = document.getElementById('blocPostesComptablesSource');
+  document.getElementById('modalPostesComptablesBody').innerHTML = bloc.innerHTML;
+  // Ouvre la modale
+  const modal = new bootstrap.Modal(document.getElementById('modalPostesComptables'));
+  modal.show();
+  // Quand on valide, on recopie les valeurs dans le vrai formulaire
+  document.getElementById('btnValiderPostesComptables').onclick = function() {
+    // Pour chaque input/select du modal, recopie dans le formulaire principal
+    document.querySelectorAll('#modalPostesComptablesBody input, #modalPostesComptablesBody select').forEach(function(input) {
+      const mainInput = document.querySelector('[name="' + input.name + '"]');
+      if(mainInput) mainInput.value = input.value;
+    });
+    modal.hide();
+  };
+}
+</script>

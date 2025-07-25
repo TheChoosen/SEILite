@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if vehicule %}Modifier {{ vehicule.unite }}{% else %}Nouveau Véhicule{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-{{ 'edit' if vehicule else 'plus' }}"></i>
+        {% if vehicule %}Modifier le Véhicule - {{ vehicule.unite }}{% else %}Nouveau Véhicule{% endif %}
+    </h1>
+    <div>
+        <a href="{{ url_for('vehicules.liste_vehicules') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+        {% if vehicule %}
+        <a href="{{ url_for('vehicules.voir_vehicule', id=vehicule.id) }}" class="btn btn-outline-info">
+            <i class="fas fa-eye"></i> Voir
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    {% if vehicule %}
+    <input type="hidden" name="id" value="{{ vehicule.id }}">
+    {% endif %}
+    
+    <!-- Identification -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-id-card"></i> Identification</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">N° Unité *</label>
+                    <input type="text" name="unite" class="form-control bg-warning bg-opacity-25"
+                        value="{{ vehicule.unite if vehicule else '' }}"
+                        {% if vehicule %}readonly{% endif %} required maxlength="20">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type *</label>
+                    <select name="type" class="form-select" required>
+                        <option value="">Sélectionner...</option>
+                        <option value="CAMION" {{ 'selected' if vehicule and vehicule.type == 'CAMION' }}>Camion</option>
+                        <option value="REMORQUE" {{ 'selected' if vehicule and vehicule.type == 'REMORQUE' }}>Remorque</option>
+                        <option value="VOITURE" {{ 'selected' if vehicule and vehicule.type == 'VOITURE' }}>Voiture</option>
+                        <option value="EQUIPEMENT" {{ 'selected' if vehicule and vehicule.type == 'EQUIPEMENT' }}>Équipement</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Année</label>
+                    <input type="number" name="annee" class="form-control"
+                        value="{{ vehicule.annee if vehicule else '' }}" min="1900" max="2030">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">N° Série</label>
+                    <input type="text" name="serie" class="form-control"
+                        value="{{ vehicule.serie if vehicule else '' }}" maxlength="50">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label">Licence</label>
+                    <input type="text" name="licence" class="form-control"
+                        value="{{ vehicule.licence if vehicule else '' }}" maxlength="20">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Statut *</label>
+                    <select name="statut" class="form-select" required>
+                        <option value="INTERNE" {{ 'selected' if not vehicule or vehicule.statut == 'INTERNE' }}>Interne</option>
+                        <option value="VENDU" {{ 'selected' if vehicule and vehicule.statut == 'VENDU' }}>Vendu</option>
+                        <option value="LOUE" {{ 'selected' if vehicule and vehicule.statut == 'LOUE' }}>Loué</option>
+                        <option value="REPARATION" {{ 'selected' if vehicule and vehicule.statut == 'REPARATION' }}>En réparation</option>
+                        <option value="DESACTIVE" {{ 'selected' if vehicule and vehicule.statut == 'DESACTIVE' }}>Désactivé</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">État</label>
+                    <select name="etat" class="form-select">
+                        <option value="">Non défini</option>
+                        <option value="EXCELLENT" {{ 'selected' if vehicule and vehicule.etat == 'EXCELLENT' }}>Excellent</option>
+                        <option value="BON" {{ 'selected' if vehicule and vehicule.etat == 'BON' }}>Bon</option>
+                        <option value="MOYEN" {{ 'selected' if vehicule and vehicule.etat == 'MOYEN' }}>Moyen</option>
+                        <option value="MAUVAIS" {{ 'selected' if vehicule and vehicule.etat == 'MAUVAIS' }}>Mauvais</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spécifications techniques -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-cogs"></i> Spécifications Techniques</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Marque</label>
+                    <input type="text" name="marque" class="form-control"
+                        value="{{ vehicule.marque if vehicule else '' }}" maxlength="30">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Modèle</label>
+                    <input type="text" name="modele" class="form-control"
+                        value="{{ vehicule.modele if vehicule else '' }}" maxlength="30">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Cabine</label>
+                    <input type="text" name="cabine" class="form-control"
+                        value="{{ vehicule.cabine if vehicule else '' }}" maxlength="20">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label">Poids</label>
+                    <input type="text" name="poids" class="form-control"
+                        value="{{ vehicule.poids if vehicule else '' }}" maxlength="20">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Combustion</label>
+                    <select name="combustion" class="form-select">
+                        <option value="">Non défini</option>
+                        <option value="ESSENCE" {{ 'selected' if vehicule and vehicule.combustion == 'ESSENCE' }}>Essence</option>
+                        <option value="DIESEL" {{ 'selected' if vehicule and vehicule.combustion == 'DIESEL' }}>Diesel</option>
+                        <option value="ELECTRIQUE" {{ 'selected' if vehicule and vehicule.combustion == 'ELECTRIQUE' }}>Électrique</option>
+                        <option value="HYBRIDE" {{ 'selected' if vehicule and vehicule.combustion == 'HYBRIDE' }}>Hybride</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Capacité</label>
+                    <input type="text" name="capacite" class="form-control"
+                        value="{{ vehicule.capacite if vehicule else '' }}" maxlength="20">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Affectation client -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-user"></i> Affectation Client</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Code client</label>
+                    <div class="input-group">
+                        <input type="text" name="client" id="inputClient" class="form-control"
+                            value="{{ vehicule.client if vehicule else '' }}" maxlength="20">
+                        <button type="button" class="btn btn-outline-secondary" title="Rechercher un client">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Nom</label>
+                    <input type="text" name="nom" class="form-control"
+                        value="{{ vehicule.nom if vehicule else '' }}" maxlength="50">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Téléphone</label>
+                    <input type="text" name="tphone" class="form-control"
+                        value="{{ vehicule.tphone if vehicule else '' }}" maxlength="20">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control"
+                        value="{{ vehicule.email if vehicule else '' }}" maxlength="100">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Adresse</label>
+                    <input type="text" name="adr1" class="form-control"
+                        value="{{ vehicule.adr1 if vehicule else '' }}" maxlength="100">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Ville</label>
+                    <input type="text" name="ville" class="form-control"
+                        value="{{ vehicule.ville if vehicule else '' }}" maxlength="50">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coûts et valeur -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-dollar-sign"></i> Coûts & Valeur</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Prix de vente</label>
+                    <input type="number" step="0.01" name="prix" id="inputPrix" class="form-control"
+                        value="{{ vehicule.prix if vehicule else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Coût (CAD)</label>
+                    <input type="number" step="0.01" name="cout" id="inputCout" class="form-control"
+                        value="{{ vehicule.cout if vehicule else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Coût (USD)</label>
+                    <input type="number" step="0.01" name="coutu" class="form-control"
+                        value="{{ vehicule.coutu if vehicule else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Profit calculé</label>
+                    <input type="number" step="0.01" name="profit" id="inputProfit" class="form-control text-bg-info"
+                        value="{{ vehicule.profit if vehicule else '' }}" readonly>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <label class="form-label">Dévaluation</label>
+                    <input type="number" step="0.01" name="devaluat" class="form-control"
+                        value="{{ vehicule.devaluat if vehicule else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Taxe fédérale</label>
+                    <input type="number" step="0.01" name="taxfed" class="form-control"
+                        value="{{ vehicule.taxfed if vehicule else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Taxe provinciale</label>
+                    <input type="number" step="0.01" name="taxpro" class="form-control"
+                        value="{{ vehicule.taxpro if vehicule else '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dates et fournisseur -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-calendar"></i> Dates & Fournisseur</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Date d'achat</label>
+                    <input type="date" name="date_ach" class="form-control"
+                        value="{% if vehicule and vehicule.date_ach %}{% if vehicule.date_ach.strftime is defined %}{{ vehicule.date_ach.strftime('%Y-%m-%d') }}{% else %}{{ vehicule.date_ach }}{% endif %}{% endif %}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Date de vente</label>
+                    <input type="date" name="date_vte" class="form-control"
+                        value="{% if vehicule and vehicule.date_vte %}{% if vehicule.date_vte.strftime is defined %}{{ vehicule.date_vte.strftime('%Y-%m-%d') }}{% else %}{{ vehicule.date_vte }}{% endif %}{% endif %}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Date de désactivation</label>
+                    <input type="date" name="date_desac" class="form-control"
+                        value="{% if vehicule and vehicule.date_desac %}{% if vehicule.date_desac.strftime is defined %}{{ vehicule.date_desac.strftime('%Y-%m-%d') }}{% else %}{{ vehicule.date_desac }}{% endif %}{% endif %}">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Fournisseur</label>
+                    <input type="text" name="four" class="form-control"
+                        value="{{ vehicule.four if vehicule else '' }}" maxlength="50">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">N° Facture</label>
+                    <input type="text" name="nofacture" class="form-control"
+                        value="{{ vehicule.nofacture if vehicule else '' }}" maxlength="30">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entretien -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-wrench"></i> Entretien & Garantie</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Prochaine maintenance (jours)</label>
+                    <input type="number" name="duree" class="form-control"
+                        value="{{ vehicule.duree if vehicule else '' }}" min="0">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Date entretien</label>
+                    <input type="date" name="entd" class="form-control"
+                        value="{% if vehicule and vehicule.entd %}{% if vehicule.entd.strftime is defined %}{{ vehicule.entd.strftime('%Y-%m-%d') }}{% else %}{{ vehicule.entd }}{% endif %}{% endif %}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Garantie</label>
+                    <input type="text" name="garantie" class="form-control"
+                        value="{{ vehicule.garantie if vehicule else '' }}" maxlength="50">
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label class="form-label">Remarque unité</label>
+                    <textarea name="remunit" class="form-control" rows="3">{{ vehicule.remunit if vehicule else '' }}</textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Remarque garantie</label>
+                    <textarea name="remgarant" class="form-control" rows="3">{{ vehicule.remgarant if vehicule else '' }}</textarea>
+                </div>
+            </div>
+            
+            <!-- Historique d'entretien -->
+            <hr>
+            <h6>Historique d'entretien</h6>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Entretien 1</label>
+                    <textarea name="ent1" class="form-control" rows="2">{{ vehicule.ent1 if vehicule else '' }}</textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Entretien 2</label>
+                    <textarea name="ent2" class="form-control" rows="2">{{ vehicule.ent2 if vehicule else '' }}</textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Entretien 3</label>
+                    <textarea name="ent3" class="form-control" rows="2">{{ vehicule.ent3 if vehicule else '' }}</textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Entretien 4</label>
+                    <textarea name="ent4" class="form-control" rows="2">{{ vehicule.ent4 if vehicule else '' }}</textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Entretien 5</label>
+                    <textarea name="ent5" class="form-control" rows="2">{{ vehicule.ent5 if vehicule else '' }}</textarea>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Entretien 6</label>
+                    <textarea name="ent6" class="form-control" rows="2">{{ vehicule.ent6 if vehicule else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remarques générales -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-comment"></i> Remarques</h5>
+        </div>
+        <div class="card-body">
+            <label class="form-label">Remarques générales</label>
+            <textarea name="remarque" class="form-control" rows="4">{{ vehicule.remarque if vehicule else '' }}</textarea>
+        </div>
+    </div>
+
+    <!-- Informations système -->
+    {% if vehicule %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-info"></i> Informations Système</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Créé le</label>
+                    <input type="text" class="form-control text-bg-info"
+                        value="{% if vehicule.date_cree %}{% if vehicule.date_cree.strftime is defined %}{{ vehicule.date_cree.strftime('%d/%m/%Y %H:%M') }}{% else %}{{ vehicule.date_cree }}{% endif %}{% endif %}"
+                        readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Modifié le</label>
+                    <input type="text" class="form-control text-bg-info"
+                        value="{% if vehicule.date_modif %}{% if vehicule.date_modif.strftime is defined %}{{ vehicule.date_modif.strftime('%d/%m/%Y %H:%M') }}{% else %}{{ vehicule.date_modif }}{% endif %}{% endif %}"
+                        readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ID</label>
+                    <input type="text" class="form-control text-bg-info"
+                        value="{{ vehicule.id }}" readonly>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Boutons d'action -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> {{ 'Modifier' if vehicule else 'Créer' }} le véhicule
+                    </button>
+                    <a href="{{ url_for('vehicules.liste_vehicules') }}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+                <div>
+                    {% if vehicule %}
+                    <button type="button" class="btn btn-warning me-2" onclick="confirmerDesactivation()">
+                        <i class="fas fa-ban"></i> Désactiver
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="dupliquerVehicule()">
+                        <i class="fas fa-copy"></i> Dupliquer
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% if vehicule %}
+<!-- Modal de confirmation de désactivation -->
+<div class="modal fade" id="modalDesactivation" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la désactivation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir désactiver le véhicule <strong>{{ vehicule.unite }}</strong> ?</p>
+                <p class="text-warning"><i class="fas fa-exclamation-triangle"></i> Le véhicule sera archivé mais pourra être réactivé plus tard.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="POST" action="{{ url_for('vehicules.desactiver_vehicule', id=vehicule.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-ban"></i> Désactiver
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    {% if vehicule %}
+    function confirmerDesactivation() {
+        new bootstrap.Modal(document.getElementById('modalDesactivation')).show();
+    }
+    
+    function dupliquerVehicule() {
+        if (confirm('Voulez-vous créer une copie de ce véhicule ?')) {
+            window.location.href = '{{ url_for("vehicules.dupliquer_vehicule", id=vehicule.id) }}';
+        }
+    }
+    {% endif %}
+
+    // Calcul automatique du profit
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputPrix = document.getElementById('inputPrix');
+        const inputCout = document.getElementById('inputCout');
+        const inputProfit = document.getElementById('inputProfit');
+        
+        function calculerProfit() {
+            const prix = parseFloat(inputPrix.value) || 0;
+            const cout = parseFloat(inputCout.value) || 0;
+            const profit = prix - cout;
+            inputProfit.value = profit.toFixed(2);
+        }
+        
+        inputPrix.addEventListener('input', calculerProfit);
+        inputCout.addEventListener('input', calculerProfit);
+        
+        // Auto-uppercase pour certains champs
+        const upperCaseFields = document.querySelectorAll('input[maxlength]');
+        upperCaseFields.forEach(field => {
+            if (field.classList.contains('bg-warning')) {
+                field.addEventListener('input', function () {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

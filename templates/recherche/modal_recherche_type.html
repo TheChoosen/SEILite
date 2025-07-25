@@ -1,0 +1,332 @@
+<!-- Modale de recherche générique pour sélection de type/référentiel (groupe, catégorie, entrepôt, etc.) -->
+<div class="modal fade" id="modalRechercheType" tabindex="-1" aria-labelledby="modalRechercheTypeLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalRechercheTypeLabel">
+                    <i class="fas fa-search"></i> Recherche <span id="recherche-type-label">Type</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formRechercheType" class="mb-3" onsubmit="return false;">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label for="selectTypeRecherche" class="form-label">Type à rechercher</label>
+                            <select id="selectTypeRecherche" class="form-select">
+                                <option value="groupe">Groupe</option>
+                                <option value="famille">Famille</option>
+                                <option value="type">Type</option>
+                                <option value="categorie">Catégorie</option>
+                                <option value="entrepot">Entrepôt</option>
+                                <!-- Ajouter d'autres types si besoin -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="inputRechercheType" class="form-label">Recherche</label>
+                            <input type="text" id="inputRechercheType" class="form-control"
+                                placeholder="Saisir un mot-clé...">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-primary w-100" id="btnLancerRechercheType">
+                                <i class="fas fa-search"></i> Rechercher
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <div class="table-responsive">
+                    <div class="d-flex justify-content-end mb-2">
+                        <button type="button" class="btn btn-success btn-sm" id="btnAjouterRefType"><i
+                                class="fas fa-plus"></i> Ajouter</button>
+                    </div>
+                    <table class="table table-hover align-middle" id="tableResultatsRechercheType">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Libellé</th>
+                                <th>Sélectionner</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Résultats dynamiques JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JS pour la recherche dynamique et la sélection
+    let callbackRechercheType = null;
+    let tableRechercheType = null;
+    let champSqlRechercheType = null;
+
+    // Nouvelle signature : (type, targetInputId, table, champ_sql)
+    function ouvrirModalRechercheType(type, targetInputIdOrCallback, table, champ_sql) {
+        document.getElementById('selectTypeRecherche').value = type;
+        document.getElementById('recherche-type-label').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+        // Pré-remplir le champ de recherche avec la valeur du champ cible si présent
+        let prefill = '';
+        if (typeof targetInputIdOrCallback === 'string') {
+            var inputCible = document.getElementById(targetInputIdOrCallback);
+            prefill = inputCible ? inputCible.value : '';
+            document.getElementById('inputRechercheType').value = prefill;
+        } else {
+            document.getElementById('inputRechercheType').value = '';
+        }
+        document.querySelector('#tableResultatsRechercheType tbody').innerHTML = '';
+        // Stocker les paramètres pour la sélection
+        if (typeof targetInputIdOrCallback === 'string') {
+            callbackRechercheType = targetInputIdOrCallback;
+            window.lastInputRechercheType = targetInputIdOrCallback;
+        } else if (typeof targetInputIdOrCallback === 'function') {
+            callbackRechercheType = targetInputIdOrCallback;
+        } else {
+            callbackRechercheType = null;
+            window.lastInputRechercheType = null;
+        }
+        tableRechercheType = table || null;
+        champSqlRechercheType = champ_sql || null;
+        const modal = new bootstrap.Modal(document.getElementById('modalRechercheType'));
+        modal.show();
+        // Lancer la recherche si la barre de recherche n'est pas vide
+        if (prefill && prefill.trim() !== '') {
+            setTimeout(lancerRechercheType, 200); // Laisse le temps à la modale de s'afficher
+        }
+        // CRUD minimal (création, édition, suppression) pour la table référentielle
+        // À adapter selon vos besoins backend
+        // Exemples d'appel : ouvrirModalRechercheType('groupe', ...), puis bouton "Créer nouveau" ou édition/suppression sur chaque ligne
+        // À compléter côté backend pour les routes POST/PUT/DELETE
+    }
+
+    document.getElementById('btnLancerRechercheType').onclick = function () {
+        lancerRechercheType();
+    };
+    document.getElementById('inputRechercheType').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') lancerRechercheType();
+    });
+
+    function lancerRechercheType() {
+        const type_produit = document.getElementById('selectTypeRecherche').value;
+        let type_code = '';
+        if (type_produit === 'groupe') type_code = 'PR';
+        else if (type_produit === 'famille') type_code = 'FZ';
+        else if (type_produit === 'type') type_code = 'TY';
+        else if (type_produit === 'categorie') type_code = 'CP';
+        else type_code = type_produit;
+        const search_value = document.getElementById('inputRechercheType').value;
+        fetch(`/recherche_type?code=${type_code}&type=${search_value}`)
+            .then(r => r.json())
+            .then(data => {
+                const tbody = document.querySelector('#tableResultatsRechercheType tbody');
+                tbody.innerHTML = '';
+                data.forEach(item => {
+                    const tr = document.createElement('tr');
+                    // Utiliser des data-attributes pour éviter les problèmes de scope JS
+                    tr.innerHTML = `
+          <td>${item.code ?? ''}</td>
+          <td>${item.libelle ?? ''}</td>
+          <td><button type="button" class="btn btn-sm btn-success btn-selectionner-type"><i class='fas fa-check'></i></button></td>
+          <td>
+            <button type="button" class="btn btn-sm btn-warning me-1 btn-editer-type"><i class='fas fa-edit'></i></button>
+            <button type="button" class="btn btn-sm btn-danger btn-supprimer-type"><i class='fas fa-trash'></i></button>
+          </td>
+        `;
+                    // Stocker les infos sur la ligne pour les handlers
+                    tr.dataset.type = type_produit;
+                    tr.dataset.code = item.code;
+                    tr.dataset.libelle = item.libelle;
+                    tbody.appendChild(tr);
+                });
+                // Nettoyer les messages d'erreur précédents
+                afficherMessageType('', '');
+
+                // Déléguer les handlers pour chaque ligne (évite les problèmes de closure)
+                tbody.querySelectorAll('.btn-selectionner-type').forEach(btn => {
+                    btn.onclick = function (e) {
+                        const tr = e.target.closest('tr');
+                        selectionnerTypeRecherche(tr.dataset.type, tr.dataset.code, tr.dataset.libelle);
+                    };
+                });
+                tbody.querySelectorAll('.btn-editer-type').forEach(btn => {
+                    btn.onclick = function (e) {
+                        const tr = e.target.closest('tr');
+                        editerRefType(tr.dataset.type, tr.dataset.code, tr.dataset.libelle);
+                    };
+                });
+                tbody.querySelectorAll('.btn-supprimer-type').forEach(btn => {
+                    btn.onclick = function (e) {
+                        const tr = e.target.closest('tr');
+                        supprimerRefType(tr.dataset.type, tr.dataset.code);
+                    };
+                });
+                // --- CRUD JS minimal ---
+                document.getElementById('btnAjouterRefType').onclick = function () {
+                    const type_produit = document.getElementById('selectTypeRecherche').value;
+                    let type_code = '';
+                    if (type_produit === 'groupe') type_code = 'PR';
+                    else if (type_produit === 'famille') type_code = 'FZ';
+                    else if (type_produit === 'type') type_code = 'TY';
+                    else if (type_produit === 'categorie') type_code = 'CP';
+                    else type_code = type_produit;
+                    const code = prompt('Code du nouvel élément :');
+                    if (!code) return;
+                    const libelle = prompt('Libellé du nouvel élément :');
+                    if (!libelle) return;
+                    fetch('/recherche_type/ajouter', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: type_code, type: code, libelle })
+                    })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.success) {
+                                afficherMessageType('success', 'Création réussie');
+                                lancerRechercheType();
+                            } else {
+                                afficherMessageType('danger', res.error || 'Erreur lors de la création');
+                            }
+                        })
+                        .catch(() => afficherMessageType('danger', 'Erreur réseau lors de la création'));
+                };
+
+                function editerRefType(type, code, libelle) {
+                    const nouveauLibelle = prompt('Nouveau libellé pour ' + code + ' :', libelle);
+                    if (!nouveauLibelle || nouveauLibelle === libelle) return;
+                    let type_code = '';
+                    if (type === 'groupe') type_code = 'PR';
+                    else if (type === 'famille') type_code = 'FZ';
+                    else if (type === 'type') type_code = 'TY';
+                    else if (type === 'categorie') type_code = 'CP';
+                    else type_code = type;
+                    fetch('/recherche_type/modifier', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: type_code, type: code, libelle: nouveauLibelle })
+                    })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.success) {
+                                afficherMessageType('success', 'Modification réussie');
+                                lancerRechercheType();
+                            } else {
+                                afficherMessageType('danger', res.error || 'Erreur lors de la modification');
+                            }
+                        })
+                        .catch(() => afficherMessageType('danger', 'Erreur réseau lors de la modification'));
+                }
+
+                function supprimerRefType(type, code) {
+                    if (!confirm('Supprimer ' + code + ' ?')) return;
+                    let type_code = '';
+                    if (type === 'groupe') type_code = 'PR';
+                    else if (type === 'famille') type_code = 'FZ';
+                    else if (type === 'type') type_code = 'TY';
+                    else if (type === 'categorie') type_code = 'CP';
+                    else type_code = type;
+                    fetch('/recherche_type/supprimer', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: type_code, type: code })
+                    })
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.success) {
+                                afficherMessageType('success', 'Suppression réussie');
+                                lancerRechercheType();
+                            } else {
+                                afficherMessageType('danger', res.error || 'Erreur lors de la suppression');
+                            }
+                        })
+                        .catch(() => afficherMessageType('danger', 'Erreur réseau lors de la suppression'));
+                }
+            });
+    }
+
+    function selectionnerTypeRecherche(type, code, libelle) {
+        // Si callbackRechercheType est une fonction custom (ex: callback JS), on laisse le dev gérer la suite
+        if (typeof callbackRechercheType === 'function') {
+            callbackRechercheType(type, code, libelle);
+            bootstrap.Modal.getInstance(document.getElementById('modalRechercheType')).hide();
+            return;
+        }
+        // Sinon, on suppose qu'on a passé l'id du champ cible (input du formulaire produit)
+        let inputCible = null;
+        let champProduit = null;
+        if (typeof callbackRechercheType === 'string') {
+            inputCible = document.getElementById(callbackRechercheType);
+            champProduit = callbackRechercheType;
+        } else if (window.lastInputRechercheType) {
+            inputCible = document.getElementById(window.lastInputRechercheType);
+            champProduit = window.lastInputRechercheType;
+        }
+        if (inputCible) {
+            inputCible.value = code;
+            // Récupérer l'id produit si présent sur le formulaire (ex: input hidden name="id" ou data-produit-id sur le form)
+            let produitId = null;
+            let formProduit = inputCible.closest('form');
+            if (formProduit) {
+                let inputId = formProduit.querySelector('[name="id"]');
+                if (inputId) produitId = inputId.value;
+                if (!produitId && formProduit.dataset.produitId) produitId = formProduit.dataset.produitId;
+            }
+            afficherMessageType('Alert', `Mise à jour du champ ${champProduit} pour le produit ${produitId}`);
+            if (produitId && champProduit) {
+                // Appel AJAX pour mettre à jour la base, en passant table et champ_sql si présents
+                const payload = {
+                    champ: champProduit,
+                    valeur: code
+                };
+                if (tableRechercheType) payload.table = tableRechercheType;
+                if (champSqlRechercheType) payload.champ_sql = champSqlRechercheType;
+                fetch(`/produits/${produitId}/maj_champ`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            afficherMessageType('success', 'Champ mis à jour');
+                        } else {
+                            afficherMessageType('danger', res.error || 'Erreur lors de la mise à jour');
+                        }
+                    })
+                    .catch(() => afficherMessageType('danger', 'Erreur réseau lors de la mise à jour'));
+            }
+            // Déclenche un event 'change' pour forcer la sauvegarde auto côté JS si besoin
+            const event = new Event('change', { bubbles: true });
+            inputCible.dispatchEvent(event);
+        }
+        bootstrap.Modal.getInstance(document.getElementById('modalRechercheType')).hide();
+    }
+    // Affichage ergonomique des messages (toast Bootstrap ou message inline)
+    function afficherMessageType(type, message) {
+        let msgDiv = document.getElementById('messageTypeRef');
+        if (!msgDiv) {
+            const container = document.querySelector('#modalRechercheType .modal-body');
+            msgDiv = document.createElement('div');
+            msgDiv.id = 'messageTypeRef';
+            container.insertBefore(msgDiv, container.firstChild);
+        }
+        msgDiv.innerHTML = '';
+        if (!type || !message) {
+            msgDiv.style.display = 'none';
+            return;
+        }
+        msgDiv.style.display = 'block';
+        msgDiv.className = `alert alert-${type} mt-2 mb-2`;
+        msgDiv.textContent = message;
+        // Disparition auto sauf danger
+        if (type !== 'danger') {
+            setTimeout(() => { msgDiv.style.display = 'none'; }, 2000);
+        }
+    }
+</script>

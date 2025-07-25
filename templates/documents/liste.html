@@ -1,0 +1,524 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion Documents Commerciaux - Liste{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/documents.css') }}" rel="stylesheet">
+<link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<style>
+    .documents-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .module-selector {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+    
+    .documents-table {
+        background: white;
+        border-radius: 6px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table-responsive {
+        border-radius: 6px;
+    }
+    
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+    
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-approved { background: #d4edda; color: #155724; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+    .status-converted { background: #cce5ff; color: #004085; }
+    .status-open { background: #e2e3e5; color: #383d41; }
+    .status-completed { background: #d1ecf1; color: #0c5460; }
+    .status-cancelled { background: #f5c6cb; color: #721c24; }
+    
+    .action-buttons .btn {
+        padding: 4px 8px;
+        margin: 0 2px;
+        font-size: 0.8em;
+    }
+    
+    .toolbar {
+        background: white;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stat-value {
+        font-size: 2em;
+        font-weight: bold;
+        color: #3498db;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- En-tête principal -->
+    <div class="documents-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1><i class="fas fa-file-invoice"></i> Gestion Documents Commerciaux</h1>
+                <p class="mb-0">Soumissions, Commandes et Factures - Tous Modules</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-light btn-lg" id="nouveauDocument">
+                    <i class="fas fa-plus"></i> Nouveau Document
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sélecteur de module -->
+    <div class="module-selector">
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <label class="form-label"><strong>Module:</strong></label>
+                <select class="form-select" id="moduleSelector">
+                    <option value="">Pièces Standard</option>
+                    <option value="wo">Bons de Travail (WO)</option>
+                    <option value="ve">Contrats de Vente (VE)</option>
+                    <option value="lo">Contrats de Location (LO)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label"><strong>Type Document:</strong></label>
+                <select class="form-select" id="typeDocument">
+                    <option value="all">Tous les Documents</option>
+                    <option value="soumission">Soumissions</option>
+                    <option value="commande">Commandes</option>
+                    <option value="facture">Factures</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><strong>Statut:</strong></label>
+                <select class="form-select" id="statutFilter">
+                    <option value="">Tous</option>
+                    <option value="P">En cours</option>
+                    <option value="A">Accepté/Ouvert</option>
+                    <option value="F">Fermé/Complété</option>
+                    <option value="C">Annulé</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><strong>Vendeur:</strong></label>
+                <select class="form-select" id="vendeurFilter">
+                    <option value="">Tous</option>
+                    <option value="V001">Martin, Jean</option>
+                    <option value="V002">Dubois, Marie</option>
+                    <option value="V003">Tremblay, Pierre</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary" style="margin-top: 24px;" id="appliquerFiltre">
+                    <i class="fas fa-search"></i> Filtrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-value" id="totalSoumissions">24</div>
+            <div class="stat-label">Soumissions Actives</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="totalCommandes">18</div>
+            <div class="stat-label">Commandes En Cours</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="totalFactures">156</div>
+            <div class="stat-label">Factures du Mois</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="montantTotal">$245,678</div>
+            <div class="stat-label">Valeur Totale</div>
+        </div>
+    </div>
+
+    <!-- Filtres avancés -->
+    <div class="filter-section">
+        <div class="row">
+            <div class="col-md-3">
+                <label class="form-label">Date Début:</label>
+                <input type="date" class="form-control" id="dateDebut">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date Fin:</label>
+                <input type="date" class="form-control" id="dateFin">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">N° Document:</label>
+                <input type="text" class="form-control" id="numeroDocument" placeholder="Rechercher par numéro">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Client:</label>
+                <input type="text" class="form-control" id="clientRecherche" placeholder="Nom ou code client">
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar actions -->
+    <div class="toolbar">
+        <div class="btn-group" role="group">
+            <button class="btn btn-outline-primary" id="exportExcel">
+                <i class="fas fa-file-excel"></i> Excel
+            </button>
+            <button class="btn btn-outline-primary" id="exportPdf">
+                <i class="fas fa-file-pdf"></i> PDF
+            </button>
+            <button class="btn btn-outline-primary" id="imprimer">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+        </div>
+        <div class="btn-group ms-2" role="group">
+            <button class="btn btn-outline-secondary" id="actualiser">
+                <i class="fas fa-sync"></i> Actualiser
+            </button>
+            <button class="btn btn-outline-info" id="colonnes">
+                <i class="fas fa-columns"></i> Colonnes
+            </button>
+        </div>
+        <div class="float-end">
+            <span class="text-muted">Affichage: </span>
+            <select class="form-select form-select-sm d-inline-block w-auto" id="limitePagination">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+            </select>
+            <span class="text-muted"> documents par page</span>
+        </div>
+    </div>
+
+    <!-- Table des documents -->
+    <div class="documents-table">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0" id="documentsTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th width="5%">
+                            <input type="checkbox" id="selectAll" class="form-check-input">
+                        </th>
+                        <th width="10%">Type</th>
+                        <th width="12%">N° Document</th>
+                        <th width="10%">Date</th>
+                        <th width="15%">Client</th>
+                        <th width="12%">Vendeur</th>
+                        <th width="10%">Montant</th>
+                        <th width="8%">Statut</th>
+                        <th width="8%">Module</th>
+                        <th width="10%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Exemple de données -->
+                    <tr data-id="1" data-type="soumission">
+                        <td><input type="checkbox" class="form-check-input row-select"></td>
+                        <td><span class="badge bg-info">SOUM</span></td>
+                        <td><strong>S2025-0001</strong></td>
+                        <td>2025-01-15</td>
+                        <td>Entreprise ABC Inc.</td>
+                        <td>Martin, Jean</td>
+                        <td class="text-end">$12,500.00</td>
+                        <td><span class="status-badge status-pending">En attente</span></td>
+                        <td><span class="badge bg-secondary">STD</span></td>
+                        <td class="action-buttons">
+                            <button class="btn btn-sm btn-outline-primary" onclick="voirDocument(1)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="modifierDocument(1)">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="dupliquerDocument(1)">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr data-id="2" data-type="commande">
+                        <td><input type="checkbox" class="form-check-input row-select"></td>
+                        <td><span class="badge bg-primary">COM</span></td>
+                        <td><strong>C2025-0045</strong></td>
+                        <td>2025-01-20</td>
+                        <td>Garage Moderne Ltée</td>
+                        <td>Dubois, Marie</td>
+                        <td class="text-end">$8,750.00</td>
+                        <td><span class="status-badge status-open">Ouverte</span></td>
+                        <td><span class="badge bg-warning">WO</span></td>
+                        <td class="action-buttons">
+                            <button class="btn btn-sm btn-outline-primary" onclick="voirDocument(2)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="modifierDocument(2)">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="convertirFacture(2)">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr data-id="3" data-type="facture">
+                        <td><input type="checkbox" class="form-check-input row-select"></td>
+                        <td><span class="badge bg-success">FACT</span></td>
+                        <td><strong>F2025-0123</strong></td>
+                        <td>2025-01-22</td>
+                        <td>Location Plus Inc.</td>
+                        <td>Tremblay, Pierre</td>
+                        <td class="text-end">$15,200.00</td>
+                        <td><span class="status-badge status-completed">Payée</span></td>
+                        <td><span class="badge bg-success">LO</span></td>
+                        <td class="action-buttons">
+                            <button class="btn btn-sm btn-outline-primary" onclick="voirDocument(3)">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="imprimerDocument(3)">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="emailDocument(3)">
+                                <i class="fas fa-envelope"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+            <div class="text-muted">
+                Affichage de 1 à 50 sur 247 documents
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <span class="page-link">Précédent</span>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">1</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changerPage(2)">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changerPage(3)">3</a>
+                    </li>
+                    <li class="page-item">
+                        <span class="page-link">...</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changerPage(5)">5</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changerPage(2)">Suivant</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nouveau Document -->
+<div class="modal fade" id="modalNouveauDocument" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nouveau Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formNouveauDocument">
+                    <div class="mb-3">
+                        <label class="form-label">Type de Document:</label>
+                        <select class="form-select" name="typeDoc" required>
+                            <option value="">Sélectionner...</option>
+                            <option value="soumission">Soumission</option>
+                            <option value="commande">Commande</option>
+                            <option value="facture">Facture</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Module:</label>
+                        <select class="form-select" name="module" required>
+                            <option value="">Pièces Standard</option>
+                            <option value="wo">Bons de Travail (WO)</option>
+                            <option value="ve">Contrats de Vente (VE)</option>
+                            <option value="lo">Contrats de Location (LO)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Client:</label>
+                        <input type="text" class="form-control" name="client" placeholder="Code ou nom client" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="creerNouveauDocument()">Créer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let documentsData = [];
+let filtresActifs = {};
+
+// Initialisation
+$(document).ready(function() {
+    chargerDocuments();
+    initialiserEvenements();
+    actualiserStatistiques();
+});
+
+// Événements
+function initialiserEvenements() {
+    $('#moduleSelector, #typeDocument, #statutFilter, #vendeurFilter').change(function() {
+        appliquerFiltres();
+    });
+    
+    $('#nouveauDocument').click(function() {
+        $('#modalNouveauDocument').modal('show');
+    });
+    
+    $('#selectAll').change(function() {
+        $('.row-select').prop('checked', this.checked);
+    });
+    
+    $('#appliquerFiltre').click(appliquerFiltres);
+    $('#actualiser').click(chargerDocuments);
+}
+
+// Chargement des données
+function chargerDocuments() {
+    // Simulation - À remplacer par appel AJAX
+    console.log('Chargement des documents...');
+    actualiserTableau();
+}
+
+function appliquerFiltres() {
+    const filtres = {
+        module: $('#moduleSelector').val(),
+        type: $('#typeDocument').val(),
+        statut: $('#statutFilter').val(),
+        vendeur: $('#vendeurFilter').val(),
+        dateDebut: $('#dateDebut').val(),
+        dateFin: $('#dateFin').val(),
+        numero: $('#numeroDocument').val(),
+        client: $('#clientRecherche').val()
+    };
+    
+    console.log('Application des filtres:', filtres);
+    // Logique de filtrage
+    actualiserTableau();
+}
+
+function actualiserTableau() {
+    // Mise à jour du tableau avec les données filtrées
+    console.log('Mise à jour du tableau');
+}
+
+function actualiserStatistiques() {
+    // Mise à jour des statistiques
+    console.log('Mise à jour des statistiques');
+}
+
+// Actions sur documents
+function voirDocument(id) {
+    window.location.href = `/documents/detail/${id}`;
+}
+
+function modifierDocument(id) {
+    window.location.href = `/documents/formulaire/${id}`;
+}
+
+function dupliquerDocument(id) {
+    if (confirm('Dupliquer ce document?')) {
+        console.log(`Duplication du document ${id}`);
+    }
+}
+
+function convertirFacture(id) {
+    if (confirm('Convertir cette commande en facture?')) {
+        console.log(`Conversion en facture du document ${id}`);
+    }
+}
+
+function imprimerDocument(id) {
+    console.log(`Impression du document ${id}`);
+}
+
+function emailDocument(id) {
+    console.log(`Envoi par email du document ${id}`);
+}
+
+function changerPage(page) {
+    console.log(`Changement vers la page ${page}`);
+}
+
+function creerNouveauDocument() {
+    const form = $('#formNouveauDocument')[0];
+    if (form.checkValidity()) {
+        const data = new FormData(form);
+        console.log('Création nouveau document:', Object.fromEntries(data));
+        $('#modalNouveauDocument').modal('hide');
+        // Redirection vers formulaire
+        window.location.href = '/documents/formulaire/nouveau';
+    } else {
+        form.reportValidity();
+    }
+}
+</script>
+
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="{{ url_for('static', filename='js/documents.js') }}"></script>
+{% endblock %}

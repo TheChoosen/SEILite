@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block title %}{{ client.client }} - {{ client.nom }} {{ client.prenom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="fas fa-user"></i>
+        Client {{ client.client }}
+        {% if not client.actif or client.arret %}
+            <span class="badge bg-danger">Inactif</span>
+        {% endif %}
+    </h1>
+    <div>
+        <a href="{{ url_for('clients.liste_clients') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+        <a href="{{ url_for('clients.modifier_client', id=client.id) }}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Modifier
+        </a>
+        <a href="{{ url_for('clients.dupliquer_client', id=client.id) }}" class="btn btn-outline-success">
+            <i class="fas fa-copy"></i> Dupliquer
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informations générales -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-id-card"></i> Informations Générales</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong>Code client:</strong></div>
+                    <div class="col-sm-8">{{ client.client }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong>Nom:</strong></div>
+                    <div class="col-sm-8">{{ client.nom or '-' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong>Prénom:</strong></div>
+                    <div class="col-sm-8">{{ client.prenom or '-' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong>Entreprise:</strong></div>
+                    <div class="col-sm-8">{{ client.compagny or '-' }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong>ID Fidélité:</strong></div>
+                    <div class="col-sm-8">
+                        {% if client.loyalid %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-star"></i> {{ client.loyalid }}
+                            </span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong>Statut:</strong></div>
+                    <div class="col-sm-8">
+                        {% if client.actif and not client.arret %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle"></i> Actif
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-times-circle"></i> Inactif
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4"><strong>Langue:</strong></div>
+                    <div class="col-sm-8">{{ client.langue or 'FR' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coordonnées -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-address-book"></i> Coordonnées</h5>
+            </div>
+            <div class="card-body">
+                {% if client.adr1 or client.ville %}
+                <div class="mb-3">
+                    <strong>Adresse:</strong><br>
+                    {% if client.adr1 %}{{ client.adr1 }}<br>{% endif %}
+                    {% if client.adr2 %}{{ client.adr2 }}<br>{% endif %}
+                    {% if client.ville %}{{ client.ville }}{% endif %}
+                    {% if client.cp1 %} {{ client.cp1 }}{% endif %}
+                    {% if client.prov %}, {{ client.prov }}{% endif %}
+                    {% if client.pays %}<br>{{ client.pays }}{% endif %}
+                </div>
+                {% endif %}
+
+                {% if client.tphone %}
+                <div class="mb-2">
+                    <strong>Téléphone:</strong>
+                    <a href="tel:{{ client.tphone }}" class="text-decoration-none ms-2">
+                        <i class="fas fa-phone text-success"></i> {{ client.tphone }}
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if client.telcel %}
+                <div class="mb-2">
+                    <strong>Cellulaire:</strong>
+                    <a href="tel:{{ client.telcel }}" class="text-decoration-none ms-2">
+                        <i class="fas fa-mobile-alt text-success"></i> {{ client.telcel }}
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if client.email %}
+                <div class="mb-2">
+                    <strong>Email:</strong>
+                    <a href="mailto:{{ client.email }}" class="text-decoration-none ms-2">
+                        <i class="fas fa-envelope text-primary"></i> {{ client.email }}
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if client.fax %}
+                <div class="mb-2">
+                    <strong>Fax:</strong> {{ client.fax }}
+                </div>
+                {% endif %}
+
+                {% if client.contact %}
+                <div class="mb-2">
+                    <strong>Contact:</strong> {{ client.contact }}
+                    {% if client.telcon %}
+                        <br><small class="text-muted">Tél. contact: {{ client.telcon }}</small>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Données commerciales -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-handshake"></i> Données Commerciales</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-sm-4"><strong>Vendeur:</strong></div>
+                    <div class="col-sm-8">{{ client.vendeur or '-' }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-4"><strong>Type:</strong></div>
+                    <div class="col-sm-8">{{ client.type or '-' }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-4"><strong>Type E:</strong></div>
+                    <div class="col-sm-8">{{ client.typee or '-' }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-4"><strong>Catégorie:</strong></div>
+                    <div class="col-sm-8">{{ client.cat or '-' }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-4"><strong>Groupe:</strong></div>
+                    <div class="col-sm-8">{{ client.groupe or '-' }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-4"><strong>Termes:</strong></div>
+                    <div class="col-sm-8">{{ client.termes or '-' }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-4"><strong>Monnaie:</strong></div>
+                    <div class="col-sm-8">{{ client.mon or 'CAD' }}</div>
+                </div>
+                {% if client.limcre %}
+                <div class="row mb-2">
+                    <div class="col-sm-4"><strong>Limite crédit:</strong></div>
+                    <div class="col-sm-8">{{ "{:,.2f}".format(client.limcre|float) }} $</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Taxes et paiements -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-calculator"></i> Taxes & Paiements</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-sm-6"><strong>Taxe fédérale:</strong></div>
+                    <div class="col-sm-6">
+                        {% if client.notaxfed %}
+                            <span class="badge bg-warning">Exempté</span>
+                        {% else %}
+                            <span class="badge bg-success">Applicable</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-sm-6"><strong>Taxe provinciale:</strong></div>
+                    <div class="col-sm-6">
+                        {% if client.notaxpro %}
+                            <span class="badge bg-warning">Exempté</span>
+                        {% else %}
+                            <span class="badge bg-success">Applicable</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if client.taux %}
+                <div class="row mb-2">
+                    <div class="col-sm-6"><strong>Taux spécial:</strong></div>
+                    <div class="col-sm-6">{{ client.taux }}%</div>
+                </div>
+                {% endif %}
+                {% if client.depot %}
+                <div class="row mb-2">
+                    <div class="col-sm-6"><strong>Dépôt:</strong></div>
+                    <div class="col-sm-6">{{ "{:,.2f}".format(client.depot|float) }} $</div>
+                </div>
+                {% endif %}
+                {% if client.trans %}
+                <div class="row mb-2">
+                    <div class="col-sm-6"><strong>Transaction:</strong></div>
+                    <div class="col-sm-6">{{ "{:,.2f}".format(client.trans|float) }} $</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remarques et tags -->
+{% if client.motcle1 or client.motcle2 or client.rem1 or client.rem2 or client.comment or client.comment2 %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5><i class="fas fa-tags"></i> Remarques & Tags</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% if client.motcle1 or client.motcle2 %}
+            <div class="col-md-12 mb-3">
+                <strong>Mots-clés:</strong>
+                {% if client.motcle1 %}
+                    <span class="badge bg-primary me-1">{{ client.motcle1 }}</span>
+                {% endif %}
+                {% if client.motcle2 %}
+                    <span class="badge bg-primary">{{ client.motcle2 }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if client.comment %}
+            <div class="col-md-6">
+                <strong>Commentaire 1:</strong>
+                <p class="mt-2">{{ client.comment }}</p>
+            </div>
+            {% endif %}
+
+            {% if client.comment2 %}
+            <div class="col-md-6">
+                <strong>Commentaire 2:</strong>
+                <p class="mt-2">{{ client.comment2 }}</p>
+            </div>
+            {% endif %}
+
+            {% if client.rem1 %}
+            <div class="col-md-6">
+                <strong>Remarque 1:</strong>
+                <p class="mt-2">{{ client.rem1 }}</p>
+            </div>
+            {% endif %}
+
+            {% if client.rem2 %}
+            <div class="col-md-6">
+                <strong>Remarque 2:</strong>
+                <p class="mt-2">{{ client.rem2 }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Dates importantes -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5><i class="fas fa-calendar"></i> Dates Importantes</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% if client.datecr %}
+            <div class="col-md-3">
+                <strong>Créé le:</strong><br>
+                {% if client.datecr.strftime is defined %}
+                    {{ client.datecr.strftime('%d/%m/%Y %H:%M') }}
+                {% else %}
+                    {{ client.datecr }}
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if client.datenais %}
+            <div class="col-md-3">
+                <strong>Date naissance:</strong><br>
+                {% if client.datenais.strftime is defined %}
+                    {{ client.datenais.strftime('%d/%m/%Y') }}
+                {% else %}
+                    {{ client.datenais }}
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if client.datdvte %}
+            <div class="col-md-3">
+                <strong>Dernière vente:</strong><br>
+                {% if client.datdvte.strftime is defined %}
+                    {{ client.datdvte.strftime('%d/%m/%Y') }}
+                {% else %}
+                    {{ client.datdvte }}
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if client.dateexp %}
+            <div class="col-md-3">
+                <strong>Date expiration:</strong><br>
+                {% if client.dateexp.strftime is defined %}
+                    {{ client.dateexp.strftime('%d/%m/%Y') }}
+                {% else %}
+                    {{ client.dateexp }}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Sécurité et fichiers -->
+{% if client.repenvoie or client.repsortie or client.ftp or client.permis or client.carte %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5><i class="fas fa-shield-alt"></i> Sécurité & Fichiers</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% if client.repenvoie %}
+            <div class="col-md-6 mb-2">
+                <strong>Rep. envoi:</strong> {{ client.repenvoie }}
+            </div>
+            {% endif %}
+            {% if client.repsortie %}
+            <div class="col-md-6 mb-2">
+                <strong>Rep. sortie:</strong> {{ client.repsortie }}
+            </div>
+            {% endif %}
+            {% if client.ftp %}
+            <div class="col-md-6 mb-2">
+                <strong>FTP:</strong> {{ client.ftp }}
+            </div>
+            {% endif %}
+            {% if client.permis %}
+            <div class="col-md-6 mb-2">
+                <strong>Permis:</strong> {{ client.permis }}
+            </div>
+            {% endif %}
+            {% if client.carte %}
+            <div class="col-md-6 mb-2">
+                <strong>Carte:</strong> {{ client.carte }}
+            </div>
+            {% endif %}
+            {% if client.motpasse %}
+            <div class="col-md-6 mb-2">
+                <strong>Mot de passe:</strong> ****
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Actions rapides -->
+<div class="card">
+    <div class="card-header">
+        <h5><i class="fas fa-bolt"></i> Actions Rapides</h5>
+    </div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+            {% if client.tphone %}
+            <a href="tel:{{ client.tphone }}" class="btn btn-outline-success">
+                <i class="fas fa-phone"></i> Appeler
+            </a>
+            {% endif %}
+            {% if client.email %}
+            <a href="mailto:{{ client.email }}" class="btn btn-outline-primary">
+                <i class="fas fa-envelope"></i> Envoyer email
+            </a>
+            {% endif %}
+            <a href="{{ url_for('clients.modifier_client', id=client.id) }}" class="btn btn-outline-warning">
+                <i class="fas fa-edit"></i> Modifier
+            </a>
+            <a href="{{ url_for('clients.dupliquer_client', id=client.id) }}" class="btn btn-outline-info">
+                <i class="fas fa-copy"></i> Dupliquer
+            </a>
+            {% if client.actif %}
+            <button type="button" class="btn btn-outline-danger" onclick="confirmerDesactivation()">
+                <i class="fas fa-ban"></i> Désactiver
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de désactivation -->
+<div class="modal fade" id="modalDesactivation" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la désactivation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir désactiver le client <strong>{{ client.client }}</strong> ?</p>
+                <p class="text-warning"><i class="fas fa-exclamation-triangle"></i> Le client sera archivé mais pourra être réactivé plus tard.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="POST" action="{{ url_for('clients.desactiver_client', id=client.id) }}" style="display: inline;">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-ban"></i> Désactiver
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmerDesactivation() {
+    new bootstrap.Modal(document.getElementById('modalDesactivation')).show();
+}
+</script>
+{% endblock %}
