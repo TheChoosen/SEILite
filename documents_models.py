@@ -59,24 +59,27 @@ def init_documents_models(db):
         FIN = db.Column(db.String(8))  # Financement
     
     class Quotete(QuoteteBase):
-        """Soumissions standard (QUOTETE)"""
-        __tablename__ = 'quotete'
-        NOSOUM = db.Column(db.String(15), unique=True)  # Numéro soumission
+        """Soumissions standard (QOTETE)"""
+        __tablename__ = 'qotete'
+        # La table QOTETE utilise NOCOM au lieu de NOSOUM
+        NOCOM = db.Column(db.String(10))  # Numéro de document
     
     class Quotetewo(QuoteteBase):
-        """Soumissions bons de travail (QUOTETEWO)"""
-        __tablename__ = 'quotetewo'
-        NOSOUM = db.Column(db.String(15), unique=True)
+        """Soumissions bons de travail (QOTETEWO)"""
+        __tablename__ = 'qotetewo'
+        # Supposons que cette table a aussi NOCOM
+        NOCOM = db.Column(db.String(10))  # Numéro de document
         
-    class Quoteteve(QuoteteBase):
-        """Soumissions contrats de vente (QUOTETEVE)"""
-        __tablename__ = 'quoteteve'
-        NOSOUM = db.Column(db.String(15), unique=True)
+    # Tables VE et LO pour soumissions n'existent pas dans cette DB
+    # class Quoteteve(QuoteteBase):
+    #     """Soumissions contrats de vente (QOTETEVE)"""
+    #     __tablename__ = 'qoteteve'  # Cette table n'existe pas dans la DB
+    #     NOSOUM = db.Column(db.String(15), unique=True)
         
-    class Quotetelo(QuoteteBase):
-        """Soumissions location (QUOTETELO)"""
-        __tablename__ = 'quotetelo'
-        NOSOUM = db.Column(db.String(15), unique=True)
+    # class Quotetelo(QuoteteBase):
+    #     """Soumissions location (QOTETELO)"""
+    #     __tablename__ = 'qotetelo'  # Cette table n'existe pas dans la DB
+    #     NOSOUM = db.Column(db.String(15), unique=True)
     
     # ================================
     # TABLES DE COMMANDES
@@ -250,13 +253,14 @@ def init_documents_models(db):
         """Lignes soumissions bons de travail (QOMMAWO)"""
         __tablename__ = 'qommawo'
         
-    class Qommave(QommaBase):
-        """Lignes soumissions contrats de vente (QOMMAVE)"""
-        __tablename__ = 'qommave'
+    # Tables VE et LO pour lignes de soumissions n'existent pas dans cette DB
+    # class Qommave(QommaBase):
+    #     """Lignes soumissions contrats de vente (QOMMAVE)"""
+    #     __tablename__ = 'qommave'
         
-    class Qommalo(QommaBase):
-        """Lignes soumissions location (QOMMALO)"""
-        __tablename__ = 'qommalo'
+    # class Qommalo(QommaBase):
+    #     """Lignes soumissions location (QOMMALO)"""
+    #     __tablename__ = 'qommalo'
     
     # ================================
     # TABLES DE LIGNES DE COMMANDES
@@ -405,11 +409,11 @@ def init_documents_models(db):
     
     # Retourner tous les modèles dans un dictionnaire
     return {
-        # En-têtes soumissions
+        # En-têtes soumissions (seulement celles qui existent)
         'Quotete': Quotete,
         'Quotetewo': Quotetewo,
-        'Quoteteve': Quoteteve,
-        'Quotetelo': Quotetelo,
+        # 'Quoteteve': Quoteteve,  # Table n'existe pas
+        # 'Quotetelo': Quotetelo,  # Table n'existe pas
         
         # En-têtes commandes
         'Cotete': Cotete,
@@ -423,11 +427,11 @@ def init_documents_models(db):
         'Factve': Factve,
         'Facturlo': Facturlo,
         
-        # Lignes soumissions
+        # Lignes soumissions (seulement celles qui existent)
         'Qomma': Qomma,
         'Qommawo': Qommawo,
-        'Qommave': Qommave,
-        'Qommalo': Qommalo,
+        # 'Qommave': Qommave,  # Table n'existe pas
+        # 'Qommalo': Qommalo,  # Table n'existe pas
         
         # Lignes commandes
         'Comma': Comma,

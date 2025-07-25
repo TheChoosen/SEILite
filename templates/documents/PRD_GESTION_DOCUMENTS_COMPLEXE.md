@@ -31,8 +31,8 @@ COTETEVE     -- Commandes contrats de vente
 COTETELO     -- Commandes location
 
 FACTUR       -- Factures standard
-FACTURWO     -- Factures bons de travail
-FACTURVE     -- Factures contrats de vente
+FACTWO     -- Factures bons de travail
+FACTVE     -- Factures contrats de vente
 FACTURLO     -- Factures location
 ```
 

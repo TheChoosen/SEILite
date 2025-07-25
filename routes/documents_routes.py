@@ -13,6 +13,18 @@ import uuid
 # Import des modèles de documents
 from documents_models import init_documents_models
 
+# Import du système de création automatique de colonnes
+from auto_column_creator import safe_query_with_auto_column_creation, initialize_missing_columns_for_model
+
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session, current_app
+from datetime import datetime, date, timedelta
+from sqlalchemy import func, desc, asc, or_
+import json
+import uuid
+
+# Import des modèles de documents
+from documents_models import init_documents_models
+
 # Variables globales pour les modèles (initialisées dans register_documents_routes)
 MODELS = {}
 
@@ -71,29 +83,43 @@ STATUTS_CONFIG = {
 # Utilitaires pour les modèles MySQL
 def get_models_for_module(module, type_document):
     """Retourne les modèles d'en-tête et de lignes pour un module et type donné"""
-    suffixe = module.lower() if module != 'PI' else ''
     
     if type_document == 'SOU':  # Soumission
-        if suffixe:
-            header_model = MODELS.get(f'Quotete{suffixe}')
-            lines_model = MODELS.get(f'Qomma{suffixe}')
-        else:
+        # Pour les soumissions, seuls PI et WO existent
+        if module == 'PI':
             header_model = MODELS.get('Quotete')
             lines_model = MODELS.get('Qomma')
+        elif module == 'WO':
+            header_model = MODELS.get('Quotetewo')
+            lines_model = MODELS.get('Qommawo')
+        else:
+            # VE et LO n'ont pas de tables de soumission
+            return None, None
+            
     elif type_document == 'COM':  # Commande
+        suffixe = module.lower() if module != 'PI' else ''
         if suffixe:
             header_model = MODELS.get(f'Cotete{suffixe}')
             lines_model = MODELS.get(f'Comma{suffixe}')
         else:
             header_model = MODELS.get('Cotete')
             lines_model = MODELS.get('Comma')
+            
     elif type_document == 'FAC':  # Facture
-        if suffixe:
-            header_model = MODELS.get(f'Factur{suffixe}')
-            lines_model = MODELS.get(f'Ligne{suffixe}')
-        else:
+        if module == 'PI':
             header_model = MODELS.get('Factur')
             lines_model = MODELS.get('Ligne')
+        elif module == 'WO':
+            header_model = MODELS.get('Factwo')
+            lines_model = MODELS.get('Lignewo')
+        elif module == 'VE':
+            header_model = MODELS.get('Factve')
+            lines_model = MODELS.get('Ligneve')
+        elif module == 'LO':
+            header_model = MODELS.get('Facturlo')
+            lines_model = MODELS.get('Lignelo')
+        else:
+            return None, None
     else:
         return None, None
     
@@ -104,10 +130,21 @@ def format_document_for_ui(document_record, lines_records, module, type_document
     if not document_record:
         return None
         
+    # Déterminer le numéro de document selon le type
+    numero = None
+    if hasattr(document_record, 'NOSOUM') and document_record.NOSOUM:
+        numero = document_record.NOSOUM
+    elif hasattr(document_record, 'NOCOM') and document_record.NOCOM:
+        numero = document_record.NOCOM
+    elif hasattr(document_record, 'NOFACT') and document_record.NOFACT:
+        numero = document_record.NOFACT
+    else:
+        numero = str(document_record.id)
+        
     # Formatage des données selon le modèle UI
     document = {
         'id': document_record.id,
-        'numero': getattr(document_record, 'NOSOUM', None) or getattr(document_record, 'NOCOM', None) or str(document_record.id),
+        'numero': numero,
         'module': module,
         'type_document': type_document,
         'client_nom': document_record.NOM or '',
@@ -174,7 +211,7 @@ def map_mysql_status(mysql_status):
 
 def get_documents_from_db(module_filter=None, type_filter=None, status_filter=None, 
                          search_query=None, page=1, per_page=20):
-    """Récupère les documents depuis la base de données MySQL"""
+    """Récupère les documents depuis la base de données MySQL avec création automatique de colonnes"""
     try:
         from app import db
         
@@ -189,38 +226,56 @@ def get_documents_from_db(module_filter=None, type_filter=None, status_filter=No
                 if not header_model:
                     continue
                 
-                # Construire la requête
-                query = db.session.query(header_model)
-                
-                # Filtres
-                if status_filter:
-                    mysql_status = get_mysql_status_from_ui(status_filter)
-                    if mysql_status:
-                        query = query.filter(header_model.STAT == mysql_status)
-                
-                if search_query:
-                    search_filter = or_(
-                        header_model.NOM.ilike(f'%{search_query}%'),
-                        func.coalesce(header_model.NOSOUM, header_model.NOCOM, '').ilike(f'%{search_query}%'),
-                        header_model.REMD.ilike(f'%{search_query}%')
-                    )
-                    query = query.filter(search_filter)
-                
-                # Pagination et tri
-                query = query.order_by(desc(header_model.DATEC))
-                
-                # Récupérer les résultats
-                for record in query.limit(per_page).offset((page-1)*per_page).all():
-                    # Récupérer les lignes
-                    lines_query = db.session.query(lines_model)
-                    if hasattr(lines_model, 'NOSOUM'):
-                        lines_query = lines_query.filter(lines_model.NOSOUM == getattr(record, 'NOSOUM', ''))
-                    elif hasattr(lines_model, 'NOCOM'):
-                        lines_query = lines_query.filter(lines_model.NOCOM == getattr(record, 'NOCOM', ''))
-                    elif hasattr(lines_model, 'NOFACT'):
-                        lines_query = lines_query.filter(lines_model.NOFACT == getattr(record, 'NOCOM', ''))
+                # Définir la fonction de requête avec gestion d'erreurs automatique
+                def execute_query():
+                    # Construire la requête
+                    query = db.session.query(header_model)
                     
-                    lines = lines_query.all()
+                    # Filtres
+                    if status_filter:
+                        mysql_status = get_mysql_status_from_ui(status_filter)
+                        if mysql_status:
+                            query = query.filter(header_model.STAT == mysql_status)
+                    
+                    if search_query:
+                        search_filter = or_(
+                            header_model.NOM.ilike(f'%{search_query}%'),
+                            func.coalesce(header_model.NOSOUM, header_model.NOCOM, '').ilike(f'%{search_query}%'),
+                            header_model.REMD.ilike(f'%{search_query}%')
+                        )
+                        query = query.filter(search_filter)
+                    
+                    # Pagination et tri
+                    query = query.order_by(desc(header_model.DATEC))
+                    
+                    # Récupérer les résultats
+                    return query.limit(per_page).offset((page-1)*per_page).all()
+                
+                # Exécuter avec création automatique de colonnes si nécessaire
+                try:
+                    records = safe_query_with_auto_column_creation(db, header_model, execute_query)
+                except Exception as e:
+                    current_app.logger.error(f"Erreur requête {module}-{doc_type}: {e}")
+                    continue
+                
+                for record in records:
+                    # Récupérer les lignes avec gestion d'erreurs automatique
+                    def get_lines():
+                        lines_query = db.session.query(lines_model)
+                        if hasattr(lines_model, 'NOSOUM'):
+                            lines_query = lines_query.filter(lines_model.NOSOUM == getattr(record, 'NOSOUM', ''))
+                        elif hasattr(lines_model, 'NOCOM'):
+                            lines_query = lines_query.filter(lines_model.NOCOM == getattr(record, 'NOCOM', ''))
+                        elif hasattr(lines_model, 'NOFACT'):
+                            lines_query = lines_query.filter(lines_model.NOFACT == getattr(record, 'NOCOM', ''))
+                        
+                        return lines_query.all()
+                    
+                    try:
+                        lines = safe_query_with_auto_column_creation(db, lines_model, get_lines)
+                    except Exception as e:
+                        current_app.logger.warning(f"Erreur lignes pour document {record.id}: {e}")
+                        lines = []
                     
                     # Formatter pour l'UI
                     document = format_document_for_ui(record, lines, module, doc_type)
@@ -337,10 +392,35 @@ def formulaire(document_id=None):
             flash('Erreur lors de la récupération du document', 'error')
             return redirect(url_for('documents.liste'))
     
+    # Récupérer les paramètres pour pré-sélection
+    selected_module = request.args.get('module')
+    selected_type = request.args.get('type_document')
+    
     return render_template('documents/formulaire.html',
                          document=document,
                          modules_config=MODULES_CONFIG,
-                         statuts_config=STATUTS_CONFIG)
+                         statuts_config=STATUTS_CONFIG,
+                         selected_module=selected_module,
+                         selected_type=selected_type)
+
+@documents_bp.route('/nouveau')
+def nouveau():
+    """Route pour créer un nouveau document avec paramètres pré-sélectionnés"""
+    module = request.args.get('module', 'PI')  # Module par défaut
+    type_document = request.args.get('type_document', 'SOU')  # Type par défaut
+    
+    # Validation des paramètres
+    if module not in MODULES_CONFIG:
+        flash(f'Module {module} non valide', 'error')
+        return redirect(url_for('documents.liste'))
+    
+    # Vérifier que le type_document existe dans le module
+    if type_document not in MODULES_CONFIG[module]['types']:
+        flash(f'Type de document {type_document} non valide pour le module {module}', 'error')
+        return redirect(url_for('documents.liste'))
+    
+    # Redirection vers le formulaire avec les paramètres
+    return redirect(url_for('documents.formulaire', module=module, type_document=type_document))
 
 # ================================
 # API ENDPOINTS
@@ -585,6 +665,18 @@ def register_documents_routes(app):
     # Initialiser les modèles avec la base de données
     from app import db
     MODELS = init_documents_models(db)
+    
+    # Initialiser les colonnes manquantes pour tous les modèles
+    with app.app_context():
+        current_app.logger.info("🔧 Vérification et création des colonnes manquantes...")
+        
+        for model_name, model_class in MODELS.items():
+            try:
+                initialize_missing_columns_for_model(db, model_class)
+            except Exception as e:
+                current_app.logger.error(f"Erreur initialisation colonnes pour {model_name}: {e}")
+        
+        current_app.logger.info("✅ Vérification des colonnes terminée")
     
     # Enregistrer le blueprint
     app.register_blueprint(documents_bp)

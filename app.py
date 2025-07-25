@@ -19,7 +19,7 @@ db = SQLAlchemy(app)
 
 # Import et initialisation du module véhicules (après création de db)
 def init_vehicules_module():
-    from vehicules_routes import vehicules_bp, init_vehicules_models
+    from routes.vehicules_routes import vehicules_bp, init_vehicules_models
     # Initialisation des modèles véhicules avec la base de données
     Vehicule = init_vehicules_models(db)
     # Enregistrement du blueprint
@@ -28,7 +28,7 @@ def init_vehicules_module():
 
 # Import et initialisation du module clients (après création de db)
 def init_clients_module():
-    from clients_routes import clients_bp, init_clients_models
+    from routes.clients_routes import clients_bp, init_clients_models
     # Initialisation des modèles clients avec la base de données
     Client = init_clients_models(db)
     # Enregistrement du blueprint
@@ -37,7 +37,7 @@ def init_clients_module():
 
 # Import et initialisation du module documents (après création de db)
 def init_documents_module():
-    from documents_routes import register_documents_routes
+    from routes.documents_routes import register_documents_routes
     # Enregistrement du module documents
     register_documents_routes(app)
     return True
